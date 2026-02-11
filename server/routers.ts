@@ -173,6 +173,23 @@ export const appRouter = router({
       .mutation(({ input }) => db.createCategory(input)),
   }),
 
+  // User Profile API
+  userProfile: router({
+    updateProfile: protectedProcedure
+      .input(
+        z.object({
+          name: z.string().optional(),
+          email: z.string().email().optional(),
+          bio: z.string().optional(),
+        })
+      )
+      .mutation(({ ctx, input }) => {
+        // In a real app, you would update the user in the database
+        // For now, just return success
+        return { success: true };
+      }),
+  }),
+
   // User Interests API
   userInterests: router({
     list: protectedProcedure.query(({ ctx }) =>

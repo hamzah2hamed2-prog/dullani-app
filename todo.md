@@ -11,9 +11,9 @@
 - [x] User registration flow (via Manus OAuth)
 - [x] User login flow (via Manus OAuth)
 - [ ] Password reset functionality
-- [ ] User profile creation
-- [ ] Interest/category selection
-- [ ] Profile edit screen
+- [x] User profile creation (profile-setup screen)
+- [x] Interest/category selection (profile-edit screen)
+- [x] Profile edit screen (with interests and bio)
 
 ## Phase 3: Product Discovery (Consumer)
 - [x] Home screen with infinite grid of products

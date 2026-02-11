@@ -70,12 +70,18 @@ export default function ProfileScreen() {
 
         {/* Menu Items */}
         <View className="gap-3 mb-6">
-          <TouchableOpacity className="bg-surface border border-border rounded-lg px-4 py-3 flex-row items-center justify-between">
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/profile-edit" as any)}
+            className="bg-surface border border-border rounded-lg px-4 py-3 flex-row items-center justify-between"
+          >
             <Text className="text-foreground font-semibold">تعديل الملف الشخصي</Text>
             <Text className="text-muted">›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity className="bg-surface border border-border rounded-lg px-4 py-3 flex-row items-center justify-between">
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/profile-edit" as any)}
+            className="bg-surface border border-border rounded-lg px-4 py-3 flex-row items-center justify-between"
+          >
             <Text className="text-foreground font-semibold">الاهتمامات</Text>
             <Text className="text-muted">›</Text>
           </TouchableOpacity>
