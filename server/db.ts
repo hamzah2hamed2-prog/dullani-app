@@ -89,4 +89,236 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ==================== PRODUCTS ====================
+
+export async function getProducts(limit: number = 20, offset: number = 0) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { products } = await import("../drizzle/schema");
+  return db
+    .select()
+    .from(products)
+    .limit(limit)
+    .offset(offset);
+}
+
+export async function getProductsByStore(storeId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { products } = await import("../drizzle/schema");
+  return db
+    .select()
+    .from(products)
+    .where(eq(products.storeId, storeId));
+}
+
+export async function getProductById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const { products } = await import("../drizzle/schema");
+  const result = await db
+    .select()
+    .from(products)
+    .where(eq(products.id, id));
+
+  return result[0] || null;
+}
+
+export async function createProduct(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { products } = await import("../drizzle/schema");
+  const result = await db.insert(products).values(data);
+  return (result as any).insertId || 0;
+}
+
+export async function updateProduct(id: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { products } = await import("../drizzle/schema");
+  await db.update(products).set(data).where(eq(products.id, id));
+}
+
+export async function deleteProduct(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { products } = await import("../drizzle/schema");
+  await db.delete(products).where(eq(products.id, id));
+}
+
+// ==================== STORES ====================
+
+export async function getStores(limit: number = 20, offset: number = 0) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { stores } = await import("../drizzle/schema");
+  return db
+    .select()
+    .from(stores)
+    .limit(limit)
+    .offset(offset);
+}
+
+export async function getStoreById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const { stores } = await import("../drizzle/schema");
+  const result = await db
+    .select()
+    .from(stores)
+    .where(eq(stores.id, id));
+
+  return result[0] || null;
+}
+
+export async function getStoreByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const { stores } = await import("../drizzle/schema");
+  const result = await db
+    .select()
+    .from(stores)
+    .where(eq(stores.userId, userId));
+
+  return result[0] || null;
+}
+
+export async function createStore(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { stores } = await import("../drizzle/schema");
+  const result = await db.insert(stores).values(data);
+  return (result as any).insertId || 0;
+}
+
+export async function updateStore(id: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { stores } = await import("../drizzle/schema");
+  await db.update(stores).set(data).where(eq(stores.id, id));
+}
+
+// ==================== WISHLIST ====================
+
+export async function getUserWishlist(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { wishlist } = await import("../drizzle/schema");
+  return db
+    .select()
+    .from(wishlist)
+    .where(eq(wishlist.userId, userId));
+}
+
+export async function addToWishlist(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { wishlist } = await import("../drizzle/schema");
+  const result = await db.insert(wishlist).values(data);
+  return (result as any).insertId || 0;
+}
+
+export async function removeFromWishlist(userId: number, productId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { wishlist } = await import("../drizzle/schema");
+  const { and } = await import("drizzle-orm");
+  await db
+    .delete(wishlist)
+    .where(
+      and(
+        eq(wishlist.userId, userId),
+        eq(wishlist.productId, productId)
+      )
+    );
+}
+
+export async function isInWishlist(userId: number, productId: number) {
+  const db = await getDb();
+  if (!db) return false;
+
+  const { wishlist } = await import("../drizzle/schema");
+  const { and } = await import("drizzle-orm");
+  const result = await db
+    .select()
+    .from(wishlist)
+    .where(
+      and(
+        eq(wishlist.userId, userId),
+        eq(wishlist.productId, productId)
+      )
+    );
+
+  return result.length > 0;
+}
+
+// ==================== CATEGORIES ====================
+
+export async function getCategories() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { categories } = await import("../drizzle/schema");
+  return db.select().from(categories);
+}
+
+export async function createCategory(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { categories } = await import("../drizzle/schema");
+  const result = await db.insert(categories).values(data);
+  return (result as any).insertId || 0;
+}
+
+// ==================== USER INTERESTS ====================
+
+export async function getUserInterests(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { userInterests } = await import("../drizzle/schema");
+  return db
+    .select()
+    .from(userInterests)
+    .where(eq(userInterests.userId, userId));
+}
+
+export async function addUserInterest(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { userInterests } = await import("../drizzle/schema");
+  const result = await db.insert(userInterests).values(data);
+  return (result as any).insertId || 0;
+}
+
+export async function removeUserInterest(userId: number, categoryId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { userInterests } = await import("../drizzle/schema");
+  const { and } = await import("drizzle-orm");
+  await db
+    .delete(userInterests)
+    .where(
+      and(
+        eq(userInterests.userId, userId),
+        eq(userInterests.categoryId, categoryId)
+      )
+    );
+}
