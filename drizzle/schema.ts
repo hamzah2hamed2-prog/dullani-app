@@ -81,6 +81,40 @@ export const userInterests = mysqlTable("userInterests", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+// Ratings table
+export const ratings = mysqlTable("ratings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  productId: int("productId"),
+  storeId: int("storeId"),
+  rating: int("rating").notNull(), // 1-5
+  review: text("review"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// Notifications table
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message"),
+  type: varchar("type", { length: 50 }).notNull(), // new_product, special_offer, order_update
+  productId: int("productId"),
+  storeId: int("storeId"),
+  read: int("read").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// Search history table
+export const searchHistory = mysqlTable("searchHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  query: varchar("query", { length: 255 }).notNull(),
+  filters: text("filters"), // JSON string
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 // Export types
 export type Store = typeof stores.$inferSelect;
 export type InsertStore = typeof stores.$inferInsert;
@@ -96,3 +130,12 @@ export type InsertCategory = typeof categories.$inferInsert;
 
 export type UserInterest = typeof userInterests.$inferSelect;
 export type InsertUserInterest = typeof userInterests.$inferInsert;
+
+export type Rating = typeof ratings.$inferSelect;
+export type InsertRating = typeof ratings.$inferInsert;
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+
+export type SearchHistory = typeof searchHistory.$inferSelect;
+export type InsertSearchHistory = typeof searchHistory.$inferInsert;
