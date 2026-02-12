@@ -106,14 +106,23 @@ export default function StoreProfileScreen() {
             )}
           </View>
 
-          {/* Contact Button */}
-          <TouchableOpacity
-            onPress={handleContactStore}
-            className="bg-primary px-4 py-3 rounded-lg flex-row items-center justify-center gap-2"
-          >
-            <Text className="text-white">💬</Text>
-            <Text className="text-white font-semibold">تواصل عبر واتساب</Text>
-          </TouchableOpacity>
+          {/* Action Buttons */}
+          <View className="gap-2">
+            <TouchableOpacity
+              onPress={handleContactStore}
+              className="bg-primary px-4 py-3 rounded-lg flex-row items-center justify-center gap-2"
+            >
+              <Text className="text-white">💬</Text>
+              <Text className="text-white font-semibold">تواصل عبر واتساب</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push(`/(tabs)/store/${store.id}/map` as any)}
+              className="bg-surface border border-primary px-4 py-3 rounded-lg flex-row items-center justify-center gap-2"
+            >
+              <Text className="text-primary">🗺️</Text>
+              <Text className="text-primary font-semibold">عرض على الخريطة</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Products Section */}

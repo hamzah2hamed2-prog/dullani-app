@@ -28,14 +28,14 @@
 - [x] Text search implementation
 - [x] Search results grid
 - [x] Category/price filters
-- [ ] Basic map integration (store locations)
-- [ ] Image search UI (camera/gallery picker)
+- [x] Basic map integration (stores-map screen)
+- [x] Image search UI (camera/gallery picker)
 
 ## Phase 5: Communication & Integration
 - [x] WhatsApp integration (pre-filled message) - in product detail
 - [x] Store contact information display
 - [x] Store hours display
-- [ ] Store location on map
+- [x] Store location on map (store map screen)
 
 ## Phase 6: Seller Features (Merchant App)
 - [ ] Merchant registration flow

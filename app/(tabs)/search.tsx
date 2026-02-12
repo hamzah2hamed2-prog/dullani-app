@@ -59,7 +59,7 @@ export default function SearchScreen() {
         <Text className="text-2xl font-bold text-foreground mb-4">البحث</Text>
 
         {/* Search Input */}
-        <View className="bg-surface border border-border rounded-lg px-3 py-2 flex-row items-center">
+        <View className="bg-surface border border-border rounded-lg px-3 py-2 flex-row items-center mb-3">
           <Text className="text-muted">🔍</Text>
           <TextInput
             placeholder="ابحث عن منتجات..."
@@ -69,9 +69,27 @@ export default function SearchScreen() {
             placeholderTextColor="#687076"
           />
         </View>
+
+        {/* Quick Action Buttons */}
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/image-search" as any)}
+            className="flex-1 bg-primary/10 border border-primary rounded-lg px-3 py-2 flex-row items-center justify-center gap-2"
+          >
+            <Text className="text-sm">📷</Text>
+            <Text className="text-xs font-semibold text-primary">البحث بالصور</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/stores-map" as any)}
+            className="flex-1 bg-primary/10 border border-primary rounded-lg px-3 py-2 flex-row items-center justify-center gap-2"
+          >
+            <Text className="text-sm">🗺️</Text>
+            <Text className="text-xs font-semibold text-primary">المتاجر</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Categories Filter */}
+      {/* Categories Filter and Results */}
       {categories.length > 0 && (
         <View className="px-4 py-3 border-b border-border">
           <Text className="text-xs font-semibold text-muted mb-2">الفئات</Text>
