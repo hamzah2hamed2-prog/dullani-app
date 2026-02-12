@@ -10,7 +10,7 @@
 ## Phase 2: Authentication & User Management
 - [x] User registration flow (via Manus OAuth)
 - [x] User login flow (via Manus OAuth)
-- [ ] Password reset functionality
+- [x] Password reset functionality (forgot-password screen)
 - [x] User profile creation (profile-setup screen)
 - [x] Interest/category selection (profile-edit screen)
 - [x] Profile edit screen (with interests and bio)
@@ -19,8 +19,8 @@
 - [x] Home screen with infinite grid of products
 - [x] Product card component (image, name, price, store)
 - [x] Product detail screen
-- [ ] Product carousel (multiple images)
-- [ ] Store profile from product detail
+- [x] Product carousel (multiple images)
+- [x] Store profile from product detail
 - [x] Wishlist functionality (add/remove) - API ready
 - [x] Wishlist screen
 

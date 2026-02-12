@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScrollView, Text, View, TouchableOpacity, Image, Linking } from "react-native";
 import { useState, useEffect } from "react";
 import { ScreenContainer } from "@/components/screen-container";
+import { ProductCarousel } from "@/components/product-carousel";
 import { trpc } from "@/lib/trpc";
 
 export default function ProductDetailScreen() {
@@ -94,14 +95,11 @@ export default function ProductDetailScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Product Image */}
-        <View className="w-full h-80 bg-muted justify-center items-center">
-          <Image
-            source={{ uri: product.image || "https://via.placeholder.com/400x400?text=Product" }}
-            className="w-full h-full"
-            resizeMode="cover"
-          />
-        </View>
+        {/* Product Image Carousel */}
+        <ProductCarousel
+          images={product.image ? [product.image] : []}
+          productName={product.name}
+        />
 
         {/* Product Info */}
         <View className="p-4 gap-4">
@@ -130,15 +128,18 @@ export default function ProductDetailScreen() {
 
           {/* Store Info */}
           {store && (
-            <View className="bg-surface border border-border rounded-lg p-4 gap-3">
+            <TouchableOpacity
+              onPress={() => router.push(`/(tabs)/store/${store.id}` as any)}
+              className="bg-surface border border-border rounded-lg p-4 gap-3"
+            >
               <Text className="text-sm font-semibold text-foreground">معلومات المتجر</Text>
               
-              <TouchableOpacity className="gap-1">
+              <View className="gap-1">
                 <Text className="text-base font-semibold text-foreground">{store.name}</Text>
                 {store.rating && (
                   <Text className="text-xs text-muted">⭐ {store.rating}</Text>
                 )}
-              </TouchableOpacity>
+              </View>
 
               {store.address && (
                 <Text className="text-xs text-muted">📍 {store.address}</Text>
@@ -151,7 +152,7 @@ export default function ProductDetailScreen() {
               {store.openingHours && (
                 <Text className="text-xs text-muted">🕐 {store.openingHours}</Text>
               )}
-            </View>
+            </TouchableOpacity>
           )}
 
           {/* Stock Status */}
