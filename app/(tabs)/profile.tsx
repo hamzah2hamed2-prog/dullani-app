@@ -71,6 +71,14 @@ export default function ProfileScreen() {
         {/* Menu Items */}
         <View className="gap-3 mb-6">
           <TouchableOpacity
+            onPress={() => router.push("/(tabs)/merchant/dashboard" as any)}
+            className="bg-primary/10 border border-primary rounded-lg px-4 py-3 flex-row items-center justify-between"
+          >
+            <Text className="text-primary font-semibold">💼 لوحة تحكم التاجر</Text>
+            <Text className="text-primary">›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             onPress={() => router.push("/(tabs)/profile-edit" as any)}
             className="bg-surface border border-border rounded-lg px-4 py-3 flex-row items-center justify-between"
           >

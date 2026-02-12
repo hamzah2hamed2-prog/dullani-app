@@ -38,11 +38,11 @@
 - [x] Store location on map (store map screen)
 
 ## Phase 6: Seller Features (Merchant App)
-- [ ] Merchant registration flow
-- [ ] Merchant profile setup
-- [ ] Product upload interface
-- [ ] Product management (edit/delete)
-- [ ] Basic dashboard (view count, click count)
+- [x] Merchant registration flow (via OAuth)
+- [x] Merchant profile setup (edit-store screen)
+- [x] Product upload interface (add-product screen)
+- [x] Product management (edit/delete) (edit-product screen)
+- [x] Basic dashboard (view count, click count) (dashboard screen)
 - [x] Merchant profile screen (profile tab)
 
 ## Phase 7: Testing & Optimization
