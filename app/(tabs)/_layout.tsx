@@ -1,16 +1,17 @@
 import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View } from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Platform } from "react-native";
 import { useColors } from "@/hooks/use-colors";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
-  const tabBarHeight = 56 + bottomPadding;
+  const tabBarHeight = 64 + bottomPadding;
 
   return (
     <Tabs
@@ -26,11 +27,20 @@ export default function TabLayout() {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
           borderTopWidth: 1,
+          elevation: 8,
+          shadowColor: colors.foreground,
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          shadowOffset: { width: 0, height: -2 },
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: "600",
-          marginTop: 2,
+          marginTop: 4,
+          letterSpacing: 0.3,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 4,
         },
       }}
     >
@@ -38,8 +48,14 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "الاستكشاف",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={24} name="house.fill" color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ alignItems: "center", justifyContent: "center" }}>
+              <MaterialIcons
+                name={focused ? "home" : "home"}
+                size={24}
+                color={color}
+              />
+            </View>
           ),
         }}
       />
@@ -48,7 +64,13 @@ export default function TabLayout() {
         options={{
           title: "البحث",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={24} name="magnifyingglass" color={color} />
+            <View style={{ alignItems: "center", justifyContent: "center" }}>
+              <MaterialIcons
+                name="search"
+                size={24}
+                color={color}
+              />
+            </View>
           ),
         }}
       />
@@ -56,8 +78,14 @@ export default function TabLayout() {
         name="wishlist"
         options={{
           title: "المفضلة",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={24} name="heart.fill" color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ alignItems: "center", justifyContent: "center" }}>
+              <MaterialIcons
+                name={focused ? "favorite" : "favorite-border"}
+                size={24}
+                color={color}
+              />
+            </View>
           ),
         }}
       />
@@ -66,7 +94,13 @@ export default function TabLayout() {
         options={{
           title: "الملف الشخصي",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={24} name="person.fill" color={color} />
+            <View style={{ alignItems: "center", justifyContent: "center" }}>
+              <MaterialIcons
+                name="account-circle"
+                size={24}
+                color={color}
+              />
+            </View>
           ),
         }}
       />
