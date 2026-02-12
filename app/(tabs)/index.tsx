@@ -1,8 +1,19 @@
-import { FlatList, Text, View, TouchableOpacity, Image } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
+import {
+  ScrollView,
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+} from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
+import { SearchBarEnhanced } from "@/components/search-bar-enhanced";
+import { ProductCardEnhanced } from "@/components/product-card-enhanced";
+import { ScreenHeader } from "@/components/screen-header";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useColors } from "@/hooks/use-colors";
 
 interface Product {
   id: string;
@@ -10,6 +21,7 @@ interface Product {
   price: number;
   image: string;
   storeName: string;
+  category: string;
 }
 
 // Mock data for MVP
@@ -20,6 +32,7 @@ const MOCK_PRODUCTS: Product[] = [
     price: 299,
     image: "https://via.placeholder.com/200x200?text=Shoe",
     storeName: "متجر الأحذية",
+    category: "أحذية",
   },
   {
     id: "2",
@@ -27,6 +40,7 @@ const MOCK_PRODUCTS: Product[] = [
     price: 599,
     image: "https://via.placeholder.com/200x200?text=Watch",
     storeName: "متجر الإلكترونيات",
+    category: "إلكترونيات",
   },
   {
     id: "3",
@@ -34,6 +48,7 @@ const MOCK_PRODUCTS: Product[] = [
     price: 199,
     image: "https://via.placeholder.com/200x200?text=Perfume",
     storeName: "متجر العطور",
+    category: "عطور",
   },
   {
     id: "4",
@@ -41,90 +56,179 @@ const MOCK_PRODUCTS: Product[] = [
     price: 449,
     image: "https://via.placeholder.com/200x200?text=Bag",
     storeName: "متجر الموضة",
+    category: "ملابس",
   },
+  {
+    id: "5",
+    name: "نظارة شمسية",
+    price: 349,
+    image: "https://via.placeholder.com/200x200?text=Sunglasses",
+    storeName: "متجر الملحقات",
+    category: "ملحقات",
+  },
+  {
+    id: "6",
+    name: "حزام جلدي",
+    price: 149,
+    image: "https://via.placeholder.com/200x200?text=Belt",
+    storeName: "متجر الموضة",
+    category: "ملحقات",
+  },
+];
+
+const CATEGORIES = [
+  { id: "1", name: "الكل", icon: "star.fill" },
+  { id: "2", name: "أحذية", icon: "bag.fill" },
+  { id: "3", name: "ملابس", icon: "tag.fill" },
+  { id: "4", name: "إلكترونيات", icon: "star.fill" },
+  { id: "5", name: "عطور", icon: "star.fill" },
 ];
 
 export default function HomeScreen() {
   const router = useRouter();
+  const colors = useColors();
   const [products] = useState<Product[]>(MOCK_PRODUCTS);
+  const [selectedCategory, setSelectedCategory] = useState("1");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [wishlisted, setWishlisted] = useState<Set<string>>(new Set());
 
-  const renderProductCard = ({ item }: { item: Product }) => (
-    <View className="flex-1 m-2">
-      <TouchableOpacity
-        onPress={() => router.push(`/(tabs)/product/${item.id}` as any)}
-        className="bg-surface rounded-lg overflow-hidden border border-border"
-      >
-        {/* Product Image */}
-        <View className="w-full h-40 bg-muted justify-center items-center">
-          <Image
-            source={{ uri: item.image }}
-            className="w-full h-full"
-            resizeMode="cover"
-          />
-        </View>
+  const handleWishlistToggle = (id: string, isWishlisted: boolean) => {
+    const newWishlisted = new Set(wishlisted);
+    if (isWishlisted) {
+      newWishlisted.add(id);
+    } else {
+      newWishlisted.delete(id);
+    }
+    setWishlisted(newWishlisted);
+  };
 
-        {/* Product Info */}
-        <View className="p-3 gap-1">
-          <Text className="text-sm font-semibold text-foreground" numberOfLines={1}>
-            {item.name}
-          </Text>
-          <Text className="text-xs text-muted">{item.storeName}</Text>
-          <Text className="text-base font-bold text-primary mt-1">
-            {item.price} ر.س
-          </Text>
-        </View>
-      </TouchableOpacity>
-    </View>
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <ScreenContainer className="p-0">
       {/* Header */}
-      <View className="px-4 py-4 gap-2 border-b border-border">
-        <Text className="text-2xl font-bold text-foreground">دلني</Text>
-        <Text className="text-xs text-muted">دليلك لمتاجر مدينتك</Text>
-      </View>
-
-      {/* Search Bar and Navigation */}
-      <View className="px-4 py-3 gap-3">
-        <TouchableOpacity
-          onPress={() => router.push("/(tabs)/search")}
-          className="bg-surface border border-border rounded-lg px-3 py-2 flex-row items-center"
-        >
-          <Text className="text-muted">🔍</Text>
-          <Text className="ml-2 text-muted text-sm">ابحث عن منتجات...</Text>
-        </TouchableOpacity>
-
-        {/* Quick Navigation */}
-        <View className="flex-row gap-2">
-          <TouchableOpacity
-            onPress={() => router.push("/(tabs)/search")}
-            className="flex-1 bg-primary px-3 py-2 rounded-lg"
-          >
-            <Text className="text-white text-xs font-semibold text-center">
-              🔍 بحث متقدم
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.push("/(tabs)/wishlist")}
-            className="flex-1 bg-surface border border-border px-3 py-2 rounded-lg"
-          >
-            <Text className="text-foreground text-xs font-semibold text-center">
-              ❤️ رغباتي
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Products Grid */}
-      <FlatList
-        data={products}
-        renderItem={renderProductCard}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        scrollEnabled={true}
-        contentContainerStyle={{ paddingHorizontal: 4 }}
+      <ScreenHeader
+        title="دلني"
+        subtitle="اكتشف أفضل المنتجات المحلية"
+        rightAction={{
+          icon: "bell.fill",
+          onPress: () => {},
+        }}
       />
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
+        {/* Search Bar */}
+        <View className="mt-4">
+          <SearchBarEnhanced
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onClear={() => setSearchQuery("")}
+            onFilterPress={() => router.push("/(tabs)/search")}
+          />
+        </View>
+
+        {/* Categories */}
+        <View className="mt-4 px-4">
+          <Text className="text-sm font-bold text-foreground mb-3">
+            الفئات
+          </Text>
+          <FlatList
+            data={CATEGORIES}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => setSelectedCategory(item.id)}
+                className={`mr-2 px-4 py-2 rounded-full border ${
+                  selectedCategory === item.id
+                    ? "bg-primary border-primary"
+                    : "bg-surface border-border"
+                }`}
+                style={{
+                  backgroundColor:
+                    selectedCategory === item.id
+                      ? colors.primary
+                      : colors.surface,
+                  borderColor:
+                    selectedCategory === item.id ? colors.primary : colors.border,
+                }}
+              >
+                <Text
+                  className={`text-sm font-semibold ${
+                    selectedCategory === item.id
+                      ? "text-white"
+                      : "text-foreground"
+                  }`}
+                >
+                  {item.name}
+                </Text>
+              </TouchableOpacity>
+            )}
+            scrollEventThrottle={16}
+          />
+        </View>
+
+        {/* Products Grid */}
+        <View className="mt-6 px-4">
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="text-sm font-bold text-foreground">
+              المنتجات المميزة
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push("/(tabs)/search")}
+              className="flex-row items-center"
+            >
+              <Text className="text-xs text-primary font-semibold">عرض الكل</Text>
+              <IconSymbol
+                size={14}
+                name="chevron.right"
+                color={colors.primary}
+              />
+            </TouchableOpacity>
+          </View>
+
+          <View className="flex-row flex-wrap justify-between">
+            {filteredProducts.map((product) => (
+              <View key={product.id} className="w-1/2 pr-2 mb-4">
+                <ProductCardEnhanced
+                  id={parseInt(product.id)}
+                  name={product.name}
+                  price={product.price.toString()}
+                  image={product.image}
+                  storeName={product.storeName}
+                  category={product.category}
+                  isWishlisted={wishlisted.has(product.id)}
+                  onWishlistToggle={(id, isWishlisted) =>
+                    handleWishlistToggle(id.toString(), isWishlisted)
+                  }
+                />
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Promotional Banner */}
+        <View className="mt-6 mx-4 bg-gradient-to-r from-primary to-primary/70 rounded-2xl p-4 overflow-hidden">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1">
+              <Text className="text-white font-bold text-lg mb-1">
+                عرض خاص
+              </Text>
+              <Text className="text-white/80 text-sm">
+                احصل على خصم 20% على أول طلب
+              </Text>
+            </View>
+            <IconSymbol size={40} name="tag.fill" color="white" />
+          </View>
+        </View>
+      </ScrollView>
     </ScreenContainer>
   );
 }

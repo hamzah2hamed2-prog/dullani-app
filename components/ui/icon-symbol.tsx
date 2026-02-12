@@ -5,7 +5,6 @@ import { SymbolWeight, SymbolViewProps } from "expo-symbols";
 import { ComponentProps } from "react";
 import { OpaqueColorValue, type StyleProp, type TextStyle } from "react-native";
 
-type IconMapping = Record<SymbolViewProps["name"], ComponentProps<typeof MaterialIcons>["name"]>;
 type IconSymbolName = keyof typeof MAPPING;
 
 /**
@@ -15,10 +14,38 @@ type IconSymbolName = keyof typeof MAPPING;
  */
 const MAPPING = {
   "house.fill": "home",
+  "magnifyingglass": "search",
+  "heart.fill": "favorite",
+  "person.fill": "person",
   "paperplane.fill": "send",
-  "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",
-} as IconMapping;
+  "chevron.left": "chevron-left",
+  "xmark": "close",
+  "checkmark": "check",
+  "storefront.fill": "store",
+  "bag.fill": "shopping-bag",
+  "tag.fill": "local-offer",
+  "star.fill": "star",
+  "phone.fill": "phone",
+  "envelope.fill": "email",
+  "mappin.fill": "location-on",
+  "clock.fill": "schedule",
+  "gear": "settings",
+  "pencil": "edit",
+  "trash.fill": "delete",
+  "camera.fill": "camera-alt",
+  "photo.fill": "image",
+  "chart.bar.fill": "bar-chart",
+  "plus.circle.fill": "add-circle",
+  "eye.fill": "visibility",
+  "hand.thumbsup.fill": "thumb-up",
+  "map.fill": "map",
+  "arrow.up.right": "open-in-new",
+  "chevron.left.forwardslash.chevron.right": "code",
+  "bell.fill": "notifications",
+  "share.fill": "share",
+  "filter": "tune",
+} as const;
 
 /**
  * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
