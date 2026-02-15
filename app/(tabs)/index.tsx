@@ -6,6 +6,7 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
+  StyleSheet,
 } from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
@@ -107,7 +108,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <ScreenContainer className="p-0">
+    <ScreenContainer style={styles.container}>
       {/* Header */}
       <ScreenHeader
         title="دلني"
@@ -120,11 +121,11 @@ export default function HomeScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        className="flex-1"
-        contentContainerStyle={{ paddingBottom: 20 }}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
       >
         {/* Search Bar */}
-        <View className="mt-4">
+        <View style={styles.searchSection}>
           <SearchBarEnhanced
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -133,9 +134,9 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* Categories */}
-        <View className="mt-4 px-4">
-          <Text className="text-sm font-bold text-foreground mb-3">
+        {/* Categories Section */}
+        <View style={styles.categoriesSection}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
             الفئات
           </Text>
           <FlatList
@@ -146,46 +147,54 @@ export default function HomeScreen() {
             renderItem={({ item }) => (
               <TouchableOpacity
                 onPress={() => setSelectedCategory(item.id)}
-                className={`mr-2 px-4 py-2 rounded-full border ${
-                  selectedCategory === item.id
-                    ? "bg-primary border-primary"
-                    : "bg-surface border-border"
-                }`}
-                style={{
-                  backgroundColor:
-                    selectedCategory === item.id
-                      ? colors.primary
-                      : colors.surface,
-                  borderColor:
-                    selectedCategory === item.id ? colors.primary : colors.border,
-                }}
+                style={[
+                  styles.categoryButton,
+                  {
+                    backgroundColor:
+                      selectedCategory === item.id
+                        ? colors.primary
+                        : colors.surface,
+                    borderColor:
+                      selectedCategory === item.id
+                        ? colors.primary
+                        : colors.border,
+                  },
+                ]}
+                activeOpacity={0.7}
               >
                 <Text
-                  className={`text-sm font-semibold ${
-                    selectedCategory === item.id
-                      ? "text-white"
-                      : "text-foreground"
-                  }`}
+                  style={[
+                    styles.categoryButtonText,
+                    {
+                      color:
+                        selectedCategory === item.id
+                          ? "white"
+                          : colors.foreground,
+                    },
+                  ]}
                 >
                   {item.name}
                 </Text>
               </TouchableOpacity>
             )}
             scrollEventThrottle={16}
+            contentContainerStyle={styles.categoriesList}
           />
         </View>
 
-        {/* Products Grid */}
-        <View className="mt-6 px-4">
-          <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-sm font-bold text-foreground">
+        {/* Products Section */}
+        <View style={styles.productsSection}>
+          <View style={styles.productsHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
               المنتجات المميزة
             </Text>
             <TouchableOpacity
               onPress={() => router.push("/(tabs)/search")}
-              className="flex-row items-center"
+              style={styles.viewAllButton}
             >
-              <Text className="text-xs text-primary font-semibold">عرض الكل</Text>
+              <Text style={[styles.viewAllText, { color: colors.primary }]}>
+                عرض الكل
+              </Text>
               <IconSymbol
                 size={14}
                 name="chevron.right"
@@ -194,9 +203,9 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          <View className="flex-row flex-wrap justify-between">
+          <View style={styles.productsGrid}>
             {filteredProducts.map((product) => (
-              <View key={product.id} className="w-1/2 pr-2 mb-4">
+              <View key={product.id} style={styles.productGridItem}>
                 <ProductCardEnhanced
                   id={parseInt(product.id)}
                   name={product.name}
@@ -215,13 +224,16 @@ export default function HomeScreen() {
         </View>
 
         {/* Promotional Banner */}
-        <View className="mt-6 mx-4 bg-gradient-to-r from-primary to-primary/70 rounded-2xl p-4 overflow-hidden">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1">
-              <Text className="text-white font-bold text-lg mb-1">
-                عرض خاص
-              </Text>
-              <Text className="text-white/80 text-sm">
+        <View
+          style={[
+            styles.promotionalBanner,
+            { backgroundColor: colors.primary },
+          ]}
+        >
+          <View style={styles.bannerContent}>
+            <View style={styles.bannerText}>
+              <Text style={styles.bannerTitle}>عرض خاص</Text>
+              <Text style={styles.bannerSubtitle}>
                 احصل على خصم 20% على أول طلب
               </Text>
             </View>
@@ -232,3 +244,102 @@ export default function HomeScreen() {
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 24,
+  },
+  searchSection: {
+    paddingTop: 12,
+  },
+  categoriesSection: {
+    marginTop: 20,
+    paddingHorizontal: 16,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 12,
+    letterSpacing: 0.3,
+  },
+  categoriesList: {
+    paddingRight: 16,
+  },
+  categoryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginRight: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  categoryButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 0.2,
+  },
+  productsSection: {
+    marginTop: 24,
+    paddingHorizontal: 16,
+  },
+  productsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  viewAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  viewAllText: {
+    fontSize: 12,
+    fontWeight: "600",
+    letterSpacing: 0.2,
+  },
+  productsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  productGridItem: {
+    width: "48%",
+  },
+  promotionalBanner: {
+    marginHorizontal: 16,
+    marginTop: 24,
+    borderRadius: 16,
+    padding: 20,
+    overflow: "hidden",
+  },
+  bannerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  bannerText: {
+    flex: 1,
+  },
+  bannerTitle: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 6,
+    letterSpacing: 0.3,
+  },
+  bannerSubtitle: {
+    color: "rgba(255,255,255,0.85)",
+    fontSize: 13,
+    fontWeight: "500",
+    lineHeight: 18,
+  },
+});

@@ -19,28 +19,31 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
-          paddingTop: 8,
-          paddingBottom: bottomPadding,
-          height: 80 + bottomPadding,
+          paddingTop: 10,
+          paddingBottom: bottomPadding + 4,
+          height: 85 + bottomPadding,
           backgroundColor: colors.background,
           borderTopColor: colors.border,
-          borderTopWidth: 1.5,
-          elevation: 15,
+          borderTopWidth: 1,
+          elevation: 20,
           shadowColor: "#000",
-          shadowOpacity: 0.12,
-          shadowRadius: 10,
-          shadowOffset: { width: 0, height: -5 },
+          shadowOpacity: 0.15,
+          shadowRadius: 15,
+          shadowOffset: { width: 0, height: -8 },
         },
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "700",
-          marginTop: 4,
-          marginBottom: 4,
+          fontSize: 11,
+          fontWeight: "600",
+          marginTop: 6,
+          marginBottom: 2,
+          letterSpacing: 0.3,
         },
         tabBarItemStyle: {
           paddingVertical: 8,
           paddingHorizontal: 0,
           flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
         },
       }}
     >
@@ -48,17 +51,17 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "الاستكشاف",
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View style={styles.tabItem}>
               <View
                 style={[
                   styles.iconContainer,
-                  { backgroundColor: color + "15" },
+                  focused && { backgroundColor: color + "20" },
                 ]}
               >
                 <MaterialIcons
                   name="home"
-                  size={32}
+                  size={28}
                   color={color}
                 />
               </View>
@@ -70,17 +73,17 @@ export default function TabLayout() {
         name="search"
         options={{
           title: "البحث",
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View style={styles.tabItem}>
               <View
                 style={[
                   styles.iconContainer,
-                  { backgroundColor: color + "15" },
+                  focused && { backgroundColor: color + "20" },
                 ]}
               >
                 <MaterialIcons
                   name="search"
-                  size={32}
+                  size={28}
                   color={color}
                 />
               </View>
@@ -97,12 +100,12 @@ export default function TabLayout() {
               <View
                 style={[
                   styles.iconContainer,
-                  { backgroundColor: color + "15" },
+                  focused && { backgroundColor: color + "20" },
                 ]}
               >
                 <MaterialIcons
                   name={focused ? "favorite" : "favorite-border"}
-                  size={32}
+                  size={28}
                   color={color}
                 />
               </View>
@@ -114,17 +117,17 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "الملف الشخصي",
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View style={styles.tabItem}>
               <View
                 style={[
                   styles.iconContainer,
-                  { backgroundColor: color + "15" },
+                  focused && { backgroundColor: color + "20" },
                 ]}
               >
                 <MaterialIcons
                   name="account-circle"
-                  size={32}
+                  size={28}
                   color={color}
                 />
               </View>
@@ -144,11 +147,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
+    width: 50,
+    height: 50,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 4,
+    marginBottom: 6,
   },
 });

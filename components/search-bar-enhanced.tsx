@@ -1,4 +1,4 @@
-import { View, TextInput, TouchableOpacity } from "react-native";
+import { View, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { IconSymbol } from "./ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 
@@ -20,14 +20,16 @@ export function SearchBarEnhanced({
   const colors = useColors();
 
   return (
-    <View className="flex-row items-center gap-2 px-4 py-2">
+    <View style={[styles.container, { paddingHorizontal: 16 }]}>
       {/* Search Input */}
       <View
-        className="flex-1 flex-row items-center rounded-full px-4 py-3 border border-border"
-        style={{
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-        }}
+        style={[
+          styles.searchInput,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+        ]}
       >
         <IconSymbol size={20} name="magnifyingglass" color={colors.muted} />
         <TextInput
@@ -35,14 +37,15 @@ export function SearchBarEnhanced({
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor={colors.muted}
-          className="flex-1 ml-2 text-foreground"
-          style={{
-            color: colors.foreground,
-            fontSize: 14,
-          }}
+          style={[
+            styles.textInput,
+            {
+              color: colors.foreground,
+            },
+          ]}
         />
         {value.length > 0 && (
-          <TouchableOpacity onPress={onClear} className="ml-2">
+          <TouchableOpacity onPress={onClear} style={styles.clearButton}>
             <IconSymbol size={18} name="xmark" color={colors.muted} />
           </TouchableOpacity>
         )}
@@ -51,11 +54,48 @@ export function SearchBarEnhanced({
       {/* Filter Button */}
       <TouchableOpacity
         onPress={onFilterPress}
-        className="bg-primary rounded-full p-3"
-        style={{ backgroundColor: colors.primary }}
+        style={[
+          styles.filterButton,
+          { backgroundColor: colors.primary },
+        ]}
+        activeOpacity={0.8}
       >
         <IconSymbol size={20} name="filter" color="white" />
       </TouchableOpacity>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 12,
+  },
+  searchInput: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  clearButton: {
+    padding: 4,
+  },
+  filterButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

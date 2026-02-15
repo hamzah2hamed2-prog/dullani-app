@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "./ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
@@ -24,32 +24,45 @@ export function ScreenHeader({
 
   return (
     <View
-      className="px-4 py-4 border-b border-border"
-      style={{
-        backgroundColor: colors.background,
-        borderBottomColor: colors.border,
-      }}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          borderBottomColor: colors.border,
+        },
+      ]}
     >
-      <View className="flex-row items-center justify-between">
+      <View style={styles.content}>
         {/* Left Side */}
-        <View className="flex-row items-center flex-1">
+        <View style={styles.leftSection}>
           {showBackButton && (
             <TouchableOpacity
               onPress={() => router.back()}
-              className="mr-3 p-2"
+              style={styles.backButton}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <IconSymbol
-                size={24}
-                name="chevron.left"
-                color={colors.foreground}
-              />
+              <View
+                style={[
+                  styles.iconButton,
+                  { backgroundColor: colors.surface },
+                ]}
+              >
+                <IconSymbol
+                  size={20}
+                  name="chevron.left"
+                  color={colors.foreground}
+                />
+              </View>
             </TouchableOpacity>
           )}
-          <View className="flex-1">
-            <Text className="text-xl font-bold text-foreground">{title}</Text>
+          <View style={styles.titleSection}>
+            <Text style={[styles.title, { color: colors.foreground }]}>
+              {title}
+            </Text>
             {subtitle && (
-              <Text className="text-xs text-muted mt-1">{subtitle}</Text>
+              <Text style={[styles.subtitle, { color: colors.muted }]}>
+                {subtitle}
+              </Text>
             )}
           </View>
         </View>
@@ -58,17 +71,69 @@ export function ScreenHeader({
         {rightAction && (
           <TouchableOpacity
             onPress={rightAction.onPress}
-            className="p-2"
+            style={styles.rightButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <IconSymbol
-              size={24}
-              name={rightAction.icon as any}
-              color={colors.foreground}
-            />
+            <View
+              style={[
+                styles.iconButton,
+                { backgroundColor: colors.primary + "15" },
+              ]}
+            >
+              <IconSymbol
+                size={20}
+                name={rightAction.icon as any}
+                color={colors.primary}
+              />
+            </View>
           </TouchableOpacity>
         )}
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  content: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  leftSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  backButton: {
+    marginRight: 12,
+  },
+  rightButton: {
+    marginLeft: 12,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  titleSection: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  subtitle: {
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: "500",
+    letterSpacing: 0.3,
+  },
+});
