@@ -1,3 +1,51 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Hide tabs that contain route names (not the main 4 tabs) */
+a[role="tab"]:has-text("stores-map"),
+a[role="tab"]:has-text("image-search"),
+a[role="tab"]:has-text("profile-edit"),
+a[role="tab"]:has-text("profile-setup"),
+a[role="tab"]:has-text("merchant"),
+a[role="tab"]:has-text("product"),
+a[role="tab"]:has-text("store") {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  pointer-events: none !important;
+}
+
+/* Alternative: Hide tabs with chevron indicators */
+a[role="tab"]:contains("⏷") {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  pointer-events: none !important;
+}
+
+/* Ensure tablist shows only 4 items */
+[role="tablist"] {
+  display: flex !important;
+  flex-direction: row !important;
+  overflow: hidden !important;
+}
+
+/* Hide scroll indicators */
+::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Ensure visible tab items take equal space */
+a[role="tab"]:not(:has-text("stores-map")):not(:has-text("image-search")):not(:has-text("profile-edit")):not(:has-text("profile-setup")):not(:has-text("merchant")):not(:has-text("product")):not(:has-text("store")) {
+  flex: 1 !important;
+  max-width: 25% !important;
+}

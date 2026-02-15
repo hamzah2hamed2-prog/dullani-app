@@ -1,7 +1,6 @@
 import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { View, Text, StyleSheet } from "react-native";
-
+import { View, StyleSheet } from "react-native";
 import { HapticTab } from "@/components/haptic-tab";
 import { Platform } from "react-native";
 import { useColors } from "@/hooks/use-colors";
@@ -15,7 +14,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.tint,
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
         headerShown: false,
         tabBarButton: HapticTab,
@@ -49,19 +48,18 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "الاستكشاف",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <View style={styles.tabItem}>
               <View
                 style={[
                   styles.iconContainer,
-                  focused && { backgroundColor: color + "15" },
+                  { backgroundColor: color + "15" },
                 ]}
               >
                 <MaterialIcons
                   name="home"
                   size={32}
                   color={color}
-                  style={{ fontWeight: "bold" }}
                 />
               </View>
             </View>
@@ -72,19 +70,18 @@ export default function TabLayout() {
         name="search"
         options={{
           title: "البحث",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <View style={styles.tabItem}>
               <View
                 style={[
                   styles.iconContainer,
-                  focused && { backgroundColor: color + "15" },
+                  { backgroundColor: color + "15" },
                 ]}
               >
                 <MaterialIcons
                   name="search"
                   size={32}
                   color={color}
-                  style={{ fontWeight: "bold" }}
                 />
               </View>
             </View>
@@ -100,14 +97,13 @@ export default function TabLayout() {
               <View
                 style={[
                   styles.iconContainer,
-                  focused && { backgroundColor: color + "15" },
+                  { backgroundColor: color + "15" },
                 ]}
               >
                 <MaterialIcons
                   name={focused ? "favorite" : "favorite-border"}
                   size={32}
                   color={color}
-                  style={{ fontWeight: "bold" }}
                 />
               </View>
             </View>
@@ -118,19 +114,18 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "الملف الشخصي",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <View style={styles.tabItem}>
               <View
                 style={[
                   styles.iconContainer,
-                  focused && { backgroundColor: color + "15" },
+                  { backgroundColor: color + "15" },
                 ]}
               >
                 <MaterialIcons
                   name="account-circle"
                   size={32}
                   color={color}
-                  style={{ fontWeight: "bold" }}
                 />
               </View>
             </View>

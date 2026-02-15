@@ -38,6 +38,38 @@ export default function RootLayout() {
     initManusRuntime();
   }, []);
 
+  // Hide extra tabs from Expo Router that are not part of the main 4 tabs
+  useEffect(() => {
+    const hideExtraTabs = () => {
+      const tabs = document.querySelectorAll('a[role="tab"]');
+      tabs.forEach((tab, index) => {
+        if (index >= 4) {
+          (tab as HTMLElement).style.display = 'none';
+          (tab as HTMLElement).style.visibility = 'hidden';
+          (tab as HTMLElement).style.width = '0';
+          (tab as HTMLElement).style.height = '0';
+          (tab as HTMLElement).style.padding = '0';
+          (tab as HTMLElement).style.margin = '0';
+          (tab as HTMLElement).style.border = 'none';
+          (tab as HTMLElement).style.pointerEvents = 'none';
+          (tab as HTMLElement).style.position = 'absolute';
+          (tab as HTMLElement).style.left = '-9999px';
+          tab.setAttribute('aria-hidden', 'true');
+          tab.setAttribute('tabindex', '-1');
+        }
+      });
+    };
+
+    if (Platform.OS === 'web') {
+      // Run immediately
+      hideExtraTabs();
+      
+      // Also run periodically to catch dynamically added tabs
+      const interval = setInterval(hideExtraTabs, 500);
+      return () => clearInterval(interval);
+    }
+  }, []);
+
   const handleSafeAreaUpdate = useCallback((metrics: Metrics) => {
     setInsets(metrics.insets);
     setFrame(metrics.frame);
