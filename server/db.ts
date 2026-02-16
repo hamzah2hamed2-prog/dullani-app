@@ -322,3 +322,207 @@ export async function removeUserInterest(userId: number, categoryId: number) {
       )
     );
 }
+
+
+// ==================== RATINGS ====================
+
+export async function createRating(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { ratings } = await import("../drizzle/schema");
+  const result = await db.insert(ratings).values(data);
+  return (result as any).insertId || 0;
+}
+
+export async function getRatingsByProductId(productId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { ratings } = await import("../drizzle/schema");
+  return db
+    .select()
+    .from(ratings)
+    .where(eq(ratings.productId, productId));
+}
+
+export async function getRatingsByStoreId(storeId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { ratings } = await import("../drizzle/schema");
+  return db
+    .select()
+    .from(ratings)
+    .where(eq(ratings.storeId, storeId));
+}
+
+export async function getAverageRatingByProductId(productId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const { ratings } = await import("../drizzle/schema");
+  const { avg } = await import("drizzle-orm");
+  const result = await db
+    .select({ average: avg(ratings.rating) })
+    .from(ratings)
+    .where(eq(ratings.productId, productId));
+
+  return result[0]?.average ? Number(result[0].average) : 0;
+}
+
+export async function getAverageRatingByStoreId(storeId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const { ratings } = await import("../drizzle/schema");
+  const { avg } = await import("drizzle-orm");
+  const result = await db
+    .select({ average: avg(ratings.rating) })
+    .from(ratings)
+    .where(eq(ratings.storeId, storeId));
+
+  return result[0]?.average ? Number(result[0].average) : 0;
+}
+
+export async function getRatingCountByProductId(productId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const { ratings } = await import("../drizzle/schema");
+  const { count } = await import("drizzle-orm");
+  const result = await db
+    .select({ count: count() })
+    .from(ratings)
+    .where(eq(ratings.productId, productId));
+
+  return result[0]?.count || 0;
+}
+
+export async function updateRating(id: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { ratings } = await import("../drizzle/schema");
+  await db.update(ratings).set(data).where(eq(ratings.id, id));
+}
+
+export async function deleteRating(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { ratings } = await import("../drizzle/schema");
+  await db.delete(ratings).where(eq(ratings.id, id));
+}
+
+
+// ==================== SEARCH HISTORY ====================
+
+export async function addSearchHistory(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { searchHistory } = await import("../drizzle/schema");
+  const result = await db.insert(searchHistory).values(data);
+  return (result as any).insertId || 0;
+}
+
+export async function getSearchHistory(userId: number, limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { searchHistory } = await import("../drizzle/schema");
+  const { desc } = await import("drizzle-orm");
+  return db
+    .select()
+    .from(searchHistory)
+    .where(eq(searchHistory.userId, userId))
+    .orderBy(desc(searchHistory.createdAt))
+    .limit(limit);
+}
+
+export async function clearSearchHistory(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { searchHistory } = await import("../drizzle/schema");
+  await db
+    .delete(searchHistory)
+    .where(eq(searchHistory.userId, userId));
+}
+
+
+// ==================== NOTIFICATIONS ====================
+
+export async function createNotification(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { notifications } = await import("../drizzle/schema");
+  const result = await db.insert(notifications).values(data);
+  return (result as any).insertId || 0;
+}
+
+export async function getNotifications(userId: number, limit: number = 20, offset: number = 0) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { notifications } = await import("../drizzle/schema");
+  const { desc } = await import("drizzle-orm");
+  return db
+    .select()
+    .from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit)
+    .offset(offset);
+}
+
+export async function markNotificationAsRead(notificationId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { notifications } = await import("../drizzle/schema");
+  await db
+    .update(notifications)
+    .set({ read: 1 })
+    .where(eq(notifications.id, notificationId));
+}
+
+export async function markAllNotificationsAsRead(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { notifications } = await import("../drizzle/schema");
+  await db
+    .update(notifications)
+    .set({ read: 1 })
+    .where(eq(notifications.userId, userId));
+}
+
+export async function getUnreadNotificationCount(userId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const { notifications } = await import("../drizzle/schema");
+  const { count, and } = await import("drizzle-orm");
+  const result = await db
+    .select({ count: count() })
+    .from(notifications)
+    .where(
+      and(
+        eq(notifications.userId, userId),
+        eq(notifications.read, 0)
+      )
+    );
+
+  return result[0]?.count || 0;
+}
+
+export async function deleteNotification(notificationId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { notifications } = await import("../drizzle/schema");
+  await db.delete(notifications).where(eq(notifications.id, notificationId));
+}

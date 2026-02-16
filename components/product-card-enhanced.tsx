@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { IconSymbol } from "./ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useRouter } from "expo-router";
+import { StarRating } from "./star-rating";
 
 interface ProductCardEnhancedProps {
   id: number;
@@ -12,6 +13,8 @@ interface ProductCardEnhancedProps {
   category: string;
   onWishlistToggle?: (id: number, isWishlisted: boolean) => void;
   isWishlisted?: boolean;
+  rating?: number;
+  ratingCount?: number;
 }
 
 export function ProductCardEnhanced({
@@ -23,6 +26,8 @@ export function ProductCardEnhanced({
   category,
   onWishlistToggle,
   isWishlisted = false,
+  rating = 0,
+  ratingCount = 0,
 }: ProductCardEnhancedProps) {
   const colors = useColors();
   const router = useRouter();
@@ -83,7 +88,7 @@ export function ProductCardEnhanced({
           activeOpacity={0.7}
         >
           <IconSymbol
-            size={20}
+            size={18}
             name="heart.fill"
             color={isWishlisted ? "white" : colors.error}
           />
@@ -102,7 +107,7 @@ export function ProductCardEnhanced({
 
         {/* Store Name */}
         <View style={styles.storeSection}>
-          <IconSymbol size={13} name="storefront.fill" color={colors.muted} />
+          <IconSymbol size={12} name="storefront.fill" color={colors.muted} />
           <Text
             numberOfLines={1}
             style={[styles.storeName, { color: colors.muted }]}
@@ -110,6 +115,13 @@ export function ProductCardEnhanced({
             {storeName}
           </Text>
         </View>
+
+        {/* Rating */}
+        {rating > 0 && (
+          <View style={styles.ratingSection}>
+            <StarRating rating={rating} size={11} showCount={true} count={ratingCount} />
+          </View>
+        )}
 
         {/* Price and Action */}
         <View style={styles.footer}>
@@ -124,7 +136,7 @@ export function ProductCardEnhanced({
             ]}
             activeOpacity={0.7}
           >
-            <IconSymbol size={16} name="chevron.right" color={colors.primary} />
+            <IconSymbol size={14} name="chevron.right" color={colors.primary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -137,15 +149,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
   imageContainer: {
     position: "relative",
     width: "100%",
-    height: 180,
+    height: 160,
     overflow: "hidden",
   },
   image: {
@@ -154,62 +166,67 @@ const styles = StyleSheet.create({
   },
   categoryBadge: {
     position: "absolute",
-    top: 12,
-    left: 12,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    top: 10,
+    left: 10,
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   categoryText: {
     color: "white",
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   wishlistButton: {
     position: "absolute",
-    top: 12,
-    right: 12,
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    top: 10,
+    right: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
   },
   content: {
     padding: 12,
+    paddingBottom: 10,
   },
   productName: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
-    marginBottom: 8,
-    lineHeight: 18,
+    marginBottom: 6,
+    lineHeight: 17,
   },
   storeSection: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
-    gap: 6,
+    marginBottom: 6,
+    gap: 5,
   },
   storeName: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "500",
     flex: 1,
+  },
+  ratingSection: {
+    marginBottom: 8,
   },
   footer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginTop: 4,
   },
   price: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   actionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
   },

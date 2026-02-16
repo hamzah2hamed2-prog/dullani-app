@@ -211,6 +211,127 @@ export const appRouter = router({
         db.removeUserInterest(ctx.user.id, input.categoryId)
       ),
   }),
+
+  // Search History API
+  searchHistory: router({
+    add: protectedProcedure
+      .input(
+        z.object({
+          query: z.string().min(1).max(255),
+          filters: z.string().optional(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        db.addSearchHistory({
+          userId: ctx.user.id,
+          ...input,
+        })
+      ),
+
+    list: protectedProcedure
+      .input(
+        z.object({
+          limit: z.number().default(10),
+        })
+      )
+      .query(({ ctx, input }) =>
+        db.getSearchHistory(ctx.user.id, input.limit)
+      ),
+
+    clear: protectedProcedure.mutation(({ ctx }) =>
+      db.clearSearchHistory(ctx.user.id)
+    ),
+  }),
+
+  // Notifications API
+  notifications: router({
+    list: protectedProcedure
+      .input(
+        z.object({
+          limit: z.number().default(20),
+          offset: z.number().default(0),
+        })
+      )
+      .query(({ ctx, input }) =>
+        db.getNotifications(ctx.user.id, input.limit, input.offset)
+      ),
+
+    unreadCount: protectedProcedure.query(({ ctx }) =>
+      db.getUnreadNotificationCount(ctx.user.id)
+    ),
+
+    markAsRead: protectedProcedure
+      .input(z.object({ notificationId: z.number() }))
+      .mutation(({ input }) =>
+        db.markNotificationAsRead(input.notificationId)
+      ),
+
+    markAllAsRead: protectedProcedure.mutation(({ ctx }) =>
+      db.markAllNotificationsAsRead(ctx.user.id)
+    ),
+
+    delete: protectedProcedure
+      .input(z.object({ notificationId: z.number() }))
+      .mutation(({ input }) =>
+        db.deleteNotification(input.notificationId)
+      ),
+  }),
+
+  // Ratings API
+  ratings: router({
+    create: protectedProcedure
+      .input(
+        z.object({
+          productId: z.number().optional(),
+          storeId: z.number().optional(),
+          rating: z.number().min(1).max(5),
+          review: z.string().optional(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        db.createRating({
+          userId: ctx.user.id,
+          ...input,
+        })
+      ),
+
+    getByProductId: publicProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(({ input }) => db.getRatingsByProductId(input.productId)),
+
+    getByStoreId: publicProcedure
+      .input(z.object({ storeId: z.number() }))
+      .query(({ input }) => db.getRatingsByStoreId(input.storeId)),
+
+    getAverageByProductId: publicProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(({ input }) => db.getAverageRatingByProductId(input.productId)),
+
+    getAverageByStoreId: publicProcedure
+      .input(z.object({ storeId: z.number() }))
+      .query(({ input }) => db.getAverageRatingByStoreId(input.storeId)),
+
+    getCountByProductId: publicProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(({ input }) => db.getRatingCountByProductId(input.productId)),
+
+    update: protectedProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          rating: z.number().min(1).max(5).optional(),
+          review: z.string().optional(),
+        })
+      )
+      .mutation(({ input }) => {
+        const { id, ...data } = input;
+        return db.updateRating(id, data);
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ input }) => db.deleteRating(input.id)),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
