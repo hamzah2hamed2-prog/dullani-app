@@ -16,6 +16,15 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    setAccountType: protectedProcedure
+      .input(
+        z.object({
+          accountType: z.enum(["consumer", "merchant"]),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        db.updateUserAccountType(ctx.user.id, input.accountType)
+      ),
   }),
 
   // Products API

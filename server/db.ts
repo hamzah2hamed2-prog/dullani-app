@@ -526,3 +526,19 @@ export async function deleteNotification(notificationId: number) {
   const { notifications } = await import("../drizzle/schema");
   await db.delete(notifications).where(eq(notifications.id, notificationId));
 }
+
+
+// ==================== USER ACCOUNT TYPE ====================
+
+export async function updateUserAccountType(userId: number, accountType: "consumer" | "merchant") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { users } = await import("../drizzle/schema");
+  await db
+    .update(users)
+    .set({ accountType })
+    .where(eq(users.id, userId));
+
+  return { success: true };
+}

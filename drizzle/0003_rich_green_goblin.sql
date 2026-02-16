@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `accountType` enum('consumer','merchant') DEFAULT 'consumer' NOT NULL;
