@@ -117,6 +117,33 @@ export const searchHistory = mysqlTable("searchHistory", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+// Follows table - for following stores and users
+export const follows = mysqlTable("follows", {
+  id: int("id").autoincrement().primaryKey(),
+  followerId: int("followerId").notNull(), // User who is following
+  followingStoreId: int("followingStoreId"), // Store being followed
+  followingUserId: int("followingUserId"), // User being followed
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// Likes table - for liking products
+export const likes = mysqlTable("likes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  productId: int("productId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// Comments table - for commenting on products
+export const comments = mysqlTable("comments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  productId: int("productId").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 // Export types
 export type Store = typeof stores.$inferSelect;
 export type InsertStore = typeof stores.$inferInsert;
@@ -141,3 +168,12 @@ export type InsertNotification = typeof notifications.$inferInsert;
 
 export type SearchHistory = typeof searchHistory.$inferSelect;
 export type InsertSearchHistory = typeof searchHistory.$inferInsert;
+
+export type Follow = typeof follows.$inferSelect;
+export type InsertFollow = typeof follows.$inferInsert;
+
+export type Like = typeof likes.$inferSelect;
+export type InsertLike = typeof likes.$inferInsert;
+
+export type Comment = typeof comments.$inferSelect;
+export type InsertComment = typeof comments.$inferInsert;

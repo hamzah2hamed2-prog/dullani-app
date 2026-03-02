@@ -341,6 +341,75 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(({ input }) => db.deleteRating(input.id)),
   }),
+
+  // Social Features API
+  social: router({
+    // Follows
+    followStore: protectedProcedure
+      .input(z.object({ storeId: z.number() }))
+      .mutation(({ ctx, input }) => db.followStore(ctx.user.id, input.storeId)),
+
+    unfollowStore: protectedProcedure
+      .input(z.object({ storeId: z.number() }))
+      .mutation(({ ctx, input }) => db.unfollowStore(ctx.user.id, input.storeId)),
+
+    isFollowingStore: protectedProcedure
+      .input(z.object({ storeId: z.number() }))
+      .query(({ ctx, input }) => db.isFollowingStore(ctx.user.id, input.storeId)),
+
+    getStoreFollowersCount: publicProcedure
+      .input(z.object({ storeId: z.number() }))
+      .query(({ input }) => db.getStoreFollowersCount(input.storeId)),
+
+    // Likes
+    likeProduct: protectedProcedure
+      .input(z.object({ productId: z.number() }))
+      .mutation(({ ctx, input }) => db.likeProduct(ctx.user.id, input.productId)),
+
+    unlikeProduct: protectedProcedure
+      .input(z.object({ productId: z.number() }))
+      .mutation(({ ctx, input }) => db.unlikeProduct(ctx.user.id, input.productId)),
+
+    isLikedByUser: protectedProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(({ ctx, input }) => db.isLikedByUser(ctx.user.id, input.productId)),
+
+    getProductLikesCount: publicProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(({ input }) => db.getProductLikesCount(input.productId)),
+
+    // Comments
+    addComment: protectedProcedure
+      .input(
+        z.object({
+          productId: z.number(),
+          content: z.string().min(1).max(500),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        db.addComment(ctx.user.id, input.productId, input.content)
+      ),
+
+    deleteComment: protectedProcedure
+      .input(z.object({ commentId: z.number() }))
+      .mutation(({ ctx, input }) => db.deleteComment(input.commentId, ctx.user.id)),
+
+    getProductComments: publicProcedure
+      .input(
+        z.object({
+          productId: z.number(),
+          limit: z.number().default(20),
+          offset: z.number().default(0),
+        })
+      )
+      .query(({ input }) =>
+        db.getProductComments(input.productId, input.limit, input.offset)
+      ),
+
+    getProductCommentsCount: publicProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(({ input }) => db.getProductCommentsCount(input.productId)),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

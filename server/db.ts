@@ -542,3 +542,201 @@ export async function updateUserAccountType(userId: number, accountType: "consum
 
   return { success: true };
 }
+
+
+// ==================== FOLLOWS (SOCIAL) ====================
+
+export async function followStore(userId: number, storeId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { follows } = await import("../drizzle/schema");
+  
+  await db.insert(follows).values({
+    followerId: userId,
+    followingStoreId: storeId,
+  });
+  
+  return { success: true };
+}
+
+export async function unfollowStore(userId: number, storeId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { follows } = await import("../drizzle/schema");
+  const { and: sqlAnd, eq: sqlEq } = await import("drizzle-orm");
+  
+  await db
+    .delete(follows)
+    .where(
+      sqlAnd(
+        sqlEq(follows.followerId, userId),
+        sqlEq(follows.followingStoreId, storeId)
+      )
+    );
+  
+  return { success: true };
+}
+
+export async function isFollowingStore(userId: number, storeId: number) {
+  const db = await getDb();
+  if (!db) return false;
+  const { follows } = await import("../drizzle/schema");
+  const { and: sqlAnd, eq: sqlEq } = await import("drizzle-orm");
+  
+  const result = await db
+    .select()
+    .from(follows)
+    .where(
+      sqlAnd(
+        sqlEq(follows.followerId, userId),
+        sqlEq(follows.followingStoreId, storeId)
+      )
+    );
+  
+  return result.length > 0;
+}
+
+export async function getStoreFollowersCount(storeId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const { follows } = await import("../drizzle/schema");
+  const { count: sqlCount, eq: sqlEq } = await import("drizzle-orm");
+  
+  const result = await db
+    .select({ count: sqlCount() })
+    .from(follows)
+    .where(sqlEq(follows.followingStoreId, storeId));
+  
+  return result[0]?.count || 0;
+}
+
+// ==================== LIKES (SOCIAL) ====================
+
+export async function likeProduct(userId: number, productId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { likes } = await import("../drizzle/schema");
+  
+  await db.insert(likes).values({
+    userId,
+    productId,
+  });
+  
+  return { success: true };
+}
+
+export async function unlikeProduct(userId: number, productId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { likes } = await import("../drizzle/schema");
+  const { and: sqlAnd, eq: sqlEq } = await import("drizzle-orm");
+  
+  await db
+    .delete(likes)
+    .where(
+      sqlAnd(
+        sqlEq(likes.userId, userId),
+        sqlEq(likes.productId, productId)
+      )
+    );
+  
+  return { success: true };
+}
+
+export async function isLikedByUser(userId: number, productId: number) {
+  const db = await getDb();
+  if (!db) return false;
+  const { likes } = await import("../drizzle/schema");
+  const { and: sqlAnd, eq: sqlEq } = await import("drizzle-orm");
+  
+  const result = await db
+    .select()
+    .from(likes)
+    .where(
+      sqlAnd(
+        sqlEq(likes.userId, userId),
+        sqlEq(likes.productId, productId)
+      )
+    );
+  
+  return result.length > 0;
+}
+
+export async function getProductLikesCount(productId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const { likes } = await import("../drizzle/schema");
+  const { count: sqlCount, eq: sqlEq } = await import("drizzle-orm");
+  
+  const result = await db
+    .select({ count: sqlCount() })
+    .from(likes)
+    .where(sqlEq(likes.productId, productId));
+  
+  return result[0]?.count || 0;
+}
+
+// ==================== COMMENTS (SOCIAL) ====================
+
+export async function addComment(userId: number, productId: number, content: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { comments } = await import("../drizzle/schema");
+  
+  const result = await db.insert(comments).values({
+    userId,
+    productId,
+    content,
+  });
+  
+  return { success: true, id: result[0].insertId };
+}
+
+export async function deleteComment(commentId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { comments } = await import("../drizzle/schema");
+  const { and: sqlAnd, eq: sqlEq } = await import("drizzle-orm");
+  
+  await db
+    .delete(comments)
+    .where(
+      sqlAnd(
+        sqlEq(comments.id, commentId),
+        sqlEq(comments.userId, userId)
+      )
+    );
+  
+  return { success: true };
+}
+
+export async function getProductComments(productId: number, limit = 20, offset = 0) {
+  const db = await getDb();
+  if (!db) return [];
+  const { comments } = await import("../drizzle/schema");
+  const { eq: sqlEq } = await import("drizzle-orm");
+  
+  const result = await db
+    .select()
+    .from(comments)
+    .where(sqlEq(comments.productId, productId))
+    .orderBy(comments.createdAt)
+    .limit(limit)
+    .offset(offset);
+  
+  return result;
+}
+
+export async function getProductCommentsCount(productId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const { comments } = await import("../drizzle/schema");
+  const { count: sqlCount, eq: sqlEq } = await import("drizzle-orm");
+  
+  const result = await db
+    .select({ count: sqlCount() })
+    .from(comments)
+    .where(sqlEq(comments.productId, productId));
+  
+  return result[0]?.count || 0;
+}
