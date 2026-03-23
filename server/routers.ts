@@ -409,6 +409,18 @@ export const appRouter = router({
     getProductCommentsCount: publicProcedure
       .input(z.object({ productId: z.number() }))
       .query(({ input }) => db.getProductCommentsCount(input.productId)),
+
+    // Following Feed
+    getFollowingFeed: protectedProcedure
+      .input(
+        z.object({
+          limit: z.number().default(20),
+          offset: z.number().default(0),
+        })
+      )
+      .query(({ ctx, input }) =>
+        db.getFollowingFeedProducts(ctx.user.id, input.limit, input.offset)
+      ),
   }),
 });
 

@@ -114,6 +114,28 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="following"
+        options={{
+          title: "المتابعات",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={styles.tabItem}>
+              <View
+                style={[
+                  styles.iconContainer,
+                  focused && { backgroundColor: color + "20" },
+                ]}
+              >
+                <MaterialIcons
+                  name="people"
+                  size={28}
+                  color={color}
+                />
+              </View>
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "الملف الشخصي",

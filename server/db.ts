@@ -740,3 +740,45 @@ export async function getProductCommentsCount(productId: number) {
   
   return result[0]?.count || 0;
 }
+
+
+// ==================== FOLLOWING FEED ====================
+
+export async function getFollowedStoresIds(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { follows } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  
+  const result = await db
+    .select({ followingStoreId: follows.followingStoreId })
+    .from(follows)
+    .where(eq(follows.followerId, userId));
+  
+  return result.map((r) => r.followingStoreId);
+}
+
+export async function getFollowingFeedProducts(userId: number, limit = 20, offset = 0) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const followedStoreIds = await getFollowedStoresIds(userId);
+  if (followedStoreIds.length === 0) return [];
+  
+  const { products } = await import("../drizzle/schema");
+  const { inArray } = await import("drizzle-orm");
+  
+  // Filter out null values from followedStoreIds
+  const validStoreIds = followedStoreIds.filter((id) => id !== null) as number[];
+  if (validStoreIds.length === 0) return [];
+  
+  const result = await db
+    .select()
+    .from(products)
+    .where(inArray(products.storeId, validStoreIds))
+    .orderBy(products.createdAt)
+    .limit(limit)
+    .offset(offset);
+  
+  return result;
+}

@@ -3,6 +3,7 @@ import { IconSymbol } from "./ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useRouter } from "expo-router";
 import { StarRating } from "./star-rating";
+import { LikeButton } from "./like-button";
 
 interface ProductCardEnhancedProps {
   id: number;
@@ -15,6 +16,8 @@ interface ProductCardEnhancedProps {
   isWishlisted?: boolean;
   rating?: number;
   ratingCount?: number;
+  likesCount?: number;
+  commentsCount?: number;
 }
 
 export function ProductCardEnhanced({
@@ -28,6 +31,8 @@ export function ProductCardEnhanced({
   isWishlisted = false,
   rating = 0,
   ratingCount = 0,
+  likesCount = 0,
+  commentsCount = 0,
 }: ProductCardEnhancedProps) {
   const colors = useColors();
   const router = useRouter();
@@ -123,6 +128,21 @@ export function ProductCardEnhanced({
           </View>
         )}
 
+        {/* Social Stats */}
+        <View style={styles.socialStats}>
+          <View style={styles.statItem}>
+            <LikeButton productId={id} size={16} showCount={true} />
+          </View>
+          {commentsCount !== undefined && commentsCount > 0 && (
+            <View style={styles.statItem}>
+              <IconSymbol size={14} name="paperplane.fill" color={colors.primary} />
+              <Text style={[styles.statText, { color: colors.muted }]}>
+                {commentsCount}
+              </Text>
+            </View>
+          )}
+        </View>
+
         {/* Price and Action */}
         <View style={styles.footer}>
           <Text style={[styles.price, { color: colors.primary }]}>
@@ -211,6 +231,24 @@ const styles = StyleSheet.create({
   },
   ratingSection: {
     marginBottom: 8,
+  },
+  socialStats: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 8,
+    paddingTop: 8,
+    borderTopWidth: 0.5,
+    borderTopColor: "rgba(0,0,0,0.1)",
+  },
+  statItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  statText: {
+    fontSize: 11,
+    fontWeight: "500",
   },
   footer: {
     flexDirection: "row",

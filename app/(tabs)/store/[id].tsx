@@ -3,10 +3,12 @@ import { ScrollView, Text, View, TouchableOpacity, Image, FlatList, Linking } fr
 import { useState, useEffect } from "react";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
+import { FollowButton } from "@/components/follow-button";
 
 export default function StoreProfileScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const [followersCount, setFollowersCount] = useState(0);
 
   // Fetch store data
   const { data: store, isLoading } = trpc.stores.getById.useQuery(
@@ -19,6 +21,18 @@ export default function StoreProfileScreen() {
     { storeId: parseInt(id as string) },
     { enabled: !!id }
   );
+
+  // Fetch followers count
+  const { data: followers = 0 } = trpc.social.getStoreFollowersCount.useQuery(
+    { storeId: parseInt(id as string) },
+    { enabled: !!id }
+  );
+
+  useEffect(() => {
+    if (typeof followers === "number") {
+      setFollowersCount(followers);
+    }
+  }, [followers]);
 
   const handleContactStore = () => {
     if (store?.phone) {
@@ -104,6 +118,17 @@ export default function StoreProfileScreen() {
                 <Text className="text-sm font-semibold text-foreground">{store.openingHours}</Text>
               </View>
             )}
+          </View>
+
+          {/* Followers Count */}
+          <View className="flex-row items-center gap-4">
+            <View className="flex-1 bg-primary/10 rounded-lg p-3">
+              <Text className="text-xs text-muted mb-1">المتابعون</Text>
+              <Text className="text-lg font-bold text-foreground">{followersCount}</Text>
+            </View>
+            <View className="flex-1">
+              <FollowButton storeId={parseInt(id as string)} size={16} />
+            </View>
           </View>
 
           {/* Action Buttons */}
