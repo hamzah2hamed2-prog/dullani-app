@@ -500,11 +500,11 @@ export async function getNotifications(userId: number, limit: number = 20, offse
   if (!db) return [];
 
   const { notifications } = await import("../drizzle/schema");
-  const { desc } = await import("drizzle-orm");
+  const { desc, eq: sqlEq } = await import("drizzle-orm");
   return db
     .select()
     .from(notifications)
-    .where(eq(notifications.userId, userId))
+    .where(sqlEq(notifications.userId, userId))
     .orderBy(desc(notifications.createdAt))
     .limit(limit)
     .offset(offset);
@@ -515,10 +515,11 @@ export async function markNotificationAsRead(notificationId: number) {
   if (!db) throw new Error("Database not available");
 
   const { notifications } = await import("../drizzle/schema");
+  const { eq: sqlEq } = await import("drizzle-orm");
   await db
     .update(notifications)
     .set({ read: 1 })
-    .where(eq(notifications.id, notificationId));
+    .where(sqlEq(notifications.id, notificationId));
 }
 
 export async function markAllNotificationsAsRead(userId: number) {
@@ -526,10 +527,11 @@ export async function markAllNotificationsAsRead(userId: number) {
   if (!db) throw new Error("Database not available");
 
   const { notifications } = await import("../drizzle/schema");
+  const { eq: sqlEq } = await import("drizzle-orm");
   await db
     .update(notifications)
     .set({ read: 1 })
-    .where(eq(notifications.userId, userId));
+    .where(sqlEq(notifications.userId, userId));
 }
 
 export async function getUnreadNotificationCount(userId: number) {
@@ -537,14 +539,14 @@ export async function getUnreadNotificationCount(userId: number) {
   if (!db) return 0;
 
   const { notifications } = await import("../drizzle/schema");
-  const { count, and } = await import("drizzle-orm");
+  const { count, and: sqlAnd, eq: sqlEq } = await import("drizzle-orm");
   const result = await db
     .select({ count: count() })
     .from(notifications)
     .where(
-      and(
-        eq(notifications.userId, userId),
-        eq(notifications.read, 0)
+      sqlAnd(
+        sqlEq(notifications.userId, userId),
+        sqlEq(notifications.read, 0)
       )
     );
 
@@ -556,7 +558,8 @@ export async function deleteNotification(notificationId: number) {
   if (!db) throw new Error("Database not available");
 
   const { notifications } = await import("../drizzle/schema");
-  await db.delete(notifications).where(eq(notifications.id, notificationId));
+  const { eq: sqlEq } = await import("drizzle-orm");
+  await db.delete(notifications).where(sqlEq(notifications.id, notificationId));
 }
 
 

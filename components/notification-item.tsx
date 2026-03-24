@@ -6,7 +6,9 @@ import {
   Image,
 } from "react-native";
 import { useColors } from "@/hooks/use-colors";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { formatDistanceToNow } from "date-fns";
+import { ar } from "date-fns/locale";
 
 interface NotificationItemProps {
   id: number;
@@ -33,21 +35,10 @@ export function NotificationItem({
 }: NotificationItemProps) {
   const colors = useColors();
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "الآن";
-    if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
-    if (diffHours < 24) return `منذ ${diffHours} ساعة`;
-    if (diffDays < 7) return `منذ ${diffDays} يوم`;
-    
-    return date.toLocaleDateString("ar-SA");
-  };
+  const timeAgo = formatDistanceToNow(new Date(createdAt), {
+    addSuffix: true,
+    locale: ar,
+  });
 
   return (
     <TouchableOpacity
@@ -56,7 +47,7 @@ export function NotificationItem({
         styles.container,
         {
           backgroundColor: read ? colors.background : `${colors.primary}10`,
-          borderColor: colors.border,
+          borderBottomColor: colors.border,
         },
       ]}
       activeOpacity={0.7}
@@ -65,7 +56,7 @@ export function NotificationItem({
       <View
         style={[
           styles.iconContainer,
-          { backgroundColor: colors.surface },
+          { borderColor: colors.border },
         ]}
       >
         {image ? (
@@ -75,8 +66,8 @@ export function NotificationItem({
             resizeMode="cover"
           />
         ) : (
-          <MaterialIcons
-            name={(icon || "notifications") as any}
+          <IconSymbol
+            name={(icon as any) || "bell.fill"}
             size={24}
             color={colors.primary}
           />
@@ -87,48 +78,31 @@ export function NotificationItem({
       <View style={styles.content}>
         <View style={styles.header}>
           <Text
-            numberOfLines={1}
+            numberOfLines={2}
             style={[
-              styles.title,
+              styles.message,
               {
                 color: colors.foreground,
-                fontWeight: read ? "600" : "700",
+                fontWeight: read ? "normal" : "bold",
               },
             ]}
           >
-            {title}
+            <Text style={{ fontWeight: "bold" }}>{title} </Text>
+            {message}
           </Text>
-          {!read && (
-            <View
-              style={[styles.unreadDot, { backgroundColor: colors.primary }]}
-            />
-          )}
         </View>
 
-        <Text
-          numberOfLines={2}
-          style={[styles.message, { color: colors.muted }]}
-        >
-          {message}
-        </Text>
-
         <Text style={[styles.time, { color: colors.muted }]}>
-          {formatTime(createdAt)}
+          {timeAgo}
         </Text>
       </View>
 
-      {/* Delete Button */}
-      <TouchableOpacity
-        onPress={onDelete}
-        style={styles.deleteButton}
-        activeOpacity={0.6}
-      >
-        <MaterialIcons
-          name="close"
-          size={18}
-          color={colors.muted}
-        />
-      </TouchableOpacity>
+      {/* Product Image / Action (Optional Instagram Style) */}
+      <View style={styles.actionContainer}>
+         {!read && (
+            <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
+         )}
+      </View>
     </TouchableOpacity>
   );
 }
@@ -137,21 +111,19 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    marginHorizontal: 16,
-    marginVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 12,
+    borderBottomWidth: 0.5,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
+    borderWidth: 1,
+    marginRight: 12,
   },
   image: {
     width: "100%",
@@ -159,35 +131,29 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    gap: 4,
+    justifyContent: "center",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    marginBottom: 4,
   },
-  title: {
-    flex: 1,
-    fontSize: 13,
-    letterSpacing: 0.3,
+  message: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  time: {
+    fontSize: 12,
+  },
+  actionContainer: {
+    marginLeft: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    width: 24,
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-  },
-  message: {
-    fontSize: 12,
-    fontWeight: "500",
-    lineHeight: 16,
-  },
-  time: {
-    fontSize: 11,
-    fontWeight: "500",
-    marginTop: 2,
-  },
-  deleteButton: {
-    padding: 8,
-    marginRight: -8,
   },
 });

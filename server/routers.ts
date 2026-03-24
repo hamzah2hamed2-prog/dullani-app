@@ -342,6 +342,40 @@ export const appRouter = router({
       .mutation(({ input }) => db.deleteRating(input.id)),
   }),
 
+  // Comments API (Moved to its own router for cleaner structure)
+  comments: router({
+    list: publicProcedure
+      .input(
+        z.object({
+          productId: z.number(),
+          limit: z.number().default(20),
+          offset: z.number().default(0),
+        })
+      )
+      .query(({ input }) =>
+        db.getProductComments(input.productId, input.limit, input.offset)
+      ),
+    
+    add: protectedProcedure
+      .input(
+        z.object({
+          productId: z.number(),
+          content: z.string().min(1).max(500),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        db.addComment(ctx.user.id, input.productId, input.content)
+      ),
+
+    delete: protectedProcedure
+      .input(z.object({ commentId: z.number() }))
+      .mutation(({ ctx, input }) => db.deleteComment(input.commentId, ctx.user.id)),
+
+    count: publicProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(({ input }) => db.getProductCommentsCount(input.productId)),
+  }),
+
   // Social Features API
   social: router({
     // Follows

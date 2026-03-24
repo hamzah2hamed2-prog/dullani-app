@@ -10,8 +10,9 @@ import { useState, useEffect } from "react";
 import { useColors } from "@/hooks/use-colors";
 import { ScreenContainer } from "@/components/screen-container";
 import { NotificationItem } from "@/components/notification-item";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { trpc } from "@/lib/trpc";
+import { useRouter } from "expo-router";
 
 interface Notification {
   id: number;
@@ -25,32 +26,29 @@ interface Notification {
 
 export default function NotificationsScreen() {
   const colors = useColors();
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
 
   const notificationsQuery = trpc.notifications.list.useQuery({
     limit: 50,
     offset: 0,
   });
 
-  const unreadCountQuery = trpc.notifications.unreadCount.useQuery();
   const markAsReadMutation = trpc.notifications.markAsRead.useMutation();
-  const markAllAsReadMutation = trpc.notifications.markAllAsRead.useMutation();
-  const deleteNotificationMutation = trpc.notifications.delete.useMutation();
 
   useEffect(() => {
     if (notificationsQuery.data) {
-      setNotifications(notificationsQuery.data as any);
+      // Temporary mapping until backend returns exactly what we need
+      const mapped = notificationsQuery.data.map(n => ({
+        ...n,
+        read: Boolean(n.read),
+        createdAt: n.createdAt.toString()
+      }));
+      setNotifications(mapped as any);
       setIsLoading(false);
     }
   }, [notificationsQuery.data]);
-
-  useEffect(() => {
-    if (unreadCountQuery.data) {
-      setUnreadCount(unreadCountQuery.data as any);
-    }
-  }, [unreadCountQuery.data]);
 
   const handleNotificationPress = async (notification: Notification) => {
     if (!notification.read) {
@@ -62,26 +60,13 @@ export default function NotificationsScreen() {
           n.id === notification.id ? { ...n, read: true } : n
         )
       );
-      setUnreadCount(Math.max(0, unreadCount - 1));
     }
-  };
-
-  const handleMarkAllAsRead = async () => {
-    await markAllAsReadMutation.mutateAsync();
-    setNotifications(notifications.map((n) => ({ ...n, read: true })));
-    setUnreadCount(0);
-  };
-
-  const handleDeleteNotification = async (notificationId: number) => {
-    await deleteNotificationMutation.mutateAsync({
-      notificationId,
-    });
-    setNotifications(notifications.filter((n) => n.id !== notificationId));
+    // Navigate based on notification type (would be handled here in a real app)
   };
 
   if (isLoading) {
     return (
-      <ScreenContainer>
+      <ScreenContainer edges={["top"]} style={{ flex: 1, backgroundColor: colors.background }}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -90,51 +75,25 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <ScreenContainer>
+    <ScreenContainer edges={["top"]} style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
-      <View
-        style={[
-          styles.header,
-          { borderBottomColor: colors.border },
-        ]}
-      >
-        <View style={styles.headerContent}>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>
-            الإشعارات
-          </Text>
-          {unreadCount > 0 && (
-            <View
-              style={[
-                styles.unreadBadge,
-                { backgroundColor: colors.error },
-              ]}
-            >
-              <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
-            </View>
-          )}
-        </View>
-        {unreadCount > 0 && (
-          <TouchableOpacity
-            onPress={handleMarkAllAsRead}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.markAllText, { color: colors.primary }]}>
-              وضع علامة على الكل
-            </Text>
-          </TouchableOpacity>
-        )}
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+          <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>الإشعارات</Text>
+        <View style={{ width: 32 }} />
       </View>
 
       {/* Notifications List */}
       {notifications.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <MaterialIcons
-            name="notifications-none"
-            size={48}
-            color={colors.muted}
-          />
-          <Text style={[styles.emptyText, { color: colors.muted }]}>
-            لا توجد إشعارات
+          <View style={[styles.emptyIconContainer, { borderColor: colors.foreground }]}>
+            <IconSymbol name="heart" size={48} color={colors.foreground} />
+          </View>
+          <Text style={[styles.emptyText, { color: colors.foreground }]}>النشاط</Text>
+          <Text style={[styles.emptySubText, { color: colors.muted }]}>
+            عندما يقوم شخص ما بالإعجاب بمنشوراتك أو التعليق عليها، ستراها هنا.
           </Text>
         </View>
       ) : (
@@ -145,10 +104,9 @@ export default function NotificationsScreen() {
             <NotificationItem
               {...item}
               onPress={() => handleNotificationPress(item)}
-              onDelete={() => handleDeleteNotification(item.id)}
             />
           )}
-          scrollEnabled={true}
+          showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
         />
       )}
@@ -158,39 +116,19 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  headerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    borderBottomWidth: 0.5,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    letterSpacing: 0.3,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  unreadBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    minWidth: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  unreadBadgeText: {
-    color: "white",
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  markAllText: {
-    fontSize: 12,
-    fontWeight: "600",
+  headerButton: {
+    padding: 4,
   },
   loadingContainer: {
     flex: 1,
@@ -201,13 +139,28 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
+    padding: 40,
+  },
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
   },
   emptyText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  emptySubText: {
     fontSize: 14,
-    fontWeight: "600",
+    textAlign: "center",
+    lineHeight: 20,
   },
   listContent: {
-    paddingVertical: 8,
+    paddingBottom: 20,
   },
 });
