@@ -3,6 +3,8 @@ import { IconSymbol } from "./ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useRouter } from "expo-router";
 import { LikeButton } from "./like-button";
+import { trpc } from "@/lib/trpc";
+import { useState } from "react";
 
 const { width } = Dimensions.get("window");
 
@@ -14,8 +16,8 @@ interface ProductCardEnhancedProps {
   storeName: string;
   category: string;
   description?: string;
-  onWishlistToggle?: (id: number, isWishlisted: boolean) => void;
   isWishlisted?: boolean;
+  onWishlistToggle?: (id: number, isWishlisted: boolean) => void;
   rating?: number;
   ratingCount?: number;
   likesCount?: number;
@@ -30,8 +32,8 @@ export function ProductCardEnhanced({
   storeName,
   category,
   description,
+  isWishlisted: initialIsWishlisted = false,
   onWishlistToggle,
-  isWishlisted = false,
   rating = 0,
   ratingCount = 0,
   likesCount = 0,
@@ -39,24 +41,38 @@ export function ProductCardEnhanced({
 }: ProductCardEnhancedProps) {
   const colors = useColors();
   const router = useRouter();
+  const [isWishlisted, setIsWishlisted] = useState(initialIsWishlisted);
+
+  const addMutation = trpc.wishlist.add.useMutation();
+  const removeMutation = trpc.wishlist.remove.useMutation();
 
   const handlePress = () => {
-    router.push({
-      pathname: "/(tabs)/product/[id]",
-      params: { id: id.toString() },
-    });
+    router.push(`/(tabs)/product/${id}`);
   };
 
-  const handleStorePress = () => {
-    // Navigate to store profile if we have storeId, for now just a placeholder
-    // router.push(`/(tabs)/store/${storeId}`);
+  const handleWishlist = async () => {
+    const nextState = !isWishlisted;
+    setIsWishlisted(nextState);
+    
+    try {
+      if (nextState) {
+        await addMutation.mutateAsync({ productId: id });
+      } else {
+        await removeMutation.mutateAsync({ productId: id });
+      }
+      onWishlistToggle?.(id, nextState);
+    } catch (error) {
+      // Revert if failed
+      setIsWishlisted(!nextState);
+      console.error("Failed to toggle wishlist:", error);
+    }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header - Instagram Style */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleStorePress} style={styles.headerLeft}>
+        <TouchableOpacity onPress={() => {}} style={styles.headerLeft}>
           <View style={[styles.avatarContainer, { borderColor: colors.primary }]}>
             <Image
               source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(storeName)}&background=random` }}
@@ -99,7 +115,7 @@ export function ProductCardEnhanced({
             <IconSymbol name="paperplane" size={24} color={colors.foreground} />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={() => onWishlistToggle?.(id, !isWishlisted)}>
+        <TouchableOpacity onPress={handleWishlist}>
           <IconSymbol 
             name={isWishlisted ? "bookmark.fill" : "bookmark"} 
             size={24} 

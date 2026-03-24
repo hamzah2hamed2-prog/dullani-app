@@ -8,6 +8,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
@@ -16,12 +17,13 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
 import { StoriesSection } from "@/components/stories-section";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function HomeScreen() {
   const router = useRouter();
   const colors = useColors();
+  const { user, isAuthenticated } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-  const [wishlisted, setWishlisted] = useState<Set<number>>(new Set());
 
   // Fetch real data from tRPC
   const { data: products = [], isLoading: productsLoading, refetch } = trpc.products.list.useQuery({
@@ -35,14 +37,24 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
-  const handleWishlistToggle = (id: number, isWishlisted: boolean) => {
-    const newWishlisted = new Set(wishlisted);
-    if (isWishlisted) {
-      newWishlisted.add(id);
-    } else {
-      newWishlisted.delete(id);
+  const handleAddPress = () => {
+    if (!isAuthenticated) {
+      router.push("/search"); // Redirect to login
+      return;
     }
-    setWishlisted(newWishlisted);
+    
+    if (user?.accountType === "merchant") {
+      router.push("/(tabs)/merchant/add-product");
+    } else {
+      Alert.alert(
+        "كن تاجراً",
+        "هل ترغب في فتح متجرك الخاص والبدء في عرض منتجاتك؟",
+        [
+          { text: "ليس الآن", style: "cancel" },
+          { text: "نعم، أريد ذلك", onPress: () => router.push("/(tabs)/profile-setup") }
+        ]
+      );
+    }
   };
 
   const renderHeader = () => (
@@ -54,16 +66,16 @@ export default function HomeScreen() {
   return (
     <ScreenContainer edges={["top"]} style={styles.container}>
       {/* Instagram Style Header */}
-      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: 'rgba(0,0,0,0.05)', borderBottomWidth: 1 }]}>
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border, borderBottomWidth: 0.5 }]}>
         <Text style={[styles.logo, { color: colors.foreground }]}>دلني</Text>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerIcon}>
+          <TouchableOpacity style={styles.headerIcon} onPress={handleAddPress}>
             <IconSymbol name="plus.circle.fill" size={24} color={colors.foreground} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerIcon} onPress={() => router.push("/(tabs)/notifications")}>
             <IconSymbol name="heart.fill" size={24} color={colors.foreground} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIcon}>
+          <TouchableOpacity style={styles.headerIcon} onPress={() => Alert.alert("قريباً", "ميزة الرسائل المباشرة ستكون متوفرة قريباً!")}>
             <IconSymbol name="paperplane" size={24} color={colors.foreground} />
           </TouchableOpacity>
         </View>
@@ -82,20 +94,18 @@ export default function HomeScreen() {
             <ProductCardEnhanced
               id={item.id}
               name={item.name}
-              price={item.price}
+              price={item.price?.toString() || "0"}
               image={item.image || "https://via.placeholder.com/400"}
               storeName={(item as any).storeName || "متجر دلني"}
               category={item.category || "عام"}
               description={item.description || undefined}
-              isWishlisted={wishlisted.has(item.id)}
-              onWishlistToggle={handleWishlistToggle}
               likesCount={Math.floor(Math.random() * 100)} // Mock likes for demo
               commentsCount={Math.floor(Math.random() * 20)} // Mock comments for demo
             />
           )}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           contentContainerStyle={styles.listContent}
         />
@@ -119,7 +129,7 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 24,
     fontWeight: 'bold',
-    fontFamily: 'System', // Instagram uses a specific font, but we'll use bold system font
+    fontFamily: 'System',
   },
   headerRight: {
     flexDirection: 'row',

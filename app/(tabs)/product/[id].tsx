@@ -1,13 +1,18 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ScrollView, Text, View, TouchableOpacity, Image, Linking } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, Image, Linking, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
 import { useState, useEffect } from "react";
 import { ScreenContainer } from "@/components/screen-container";
-import { ProductCarousel } from "@/components/product-carousel";
 import { trpc } from "@/lib/trpc";
+import { useColors } from "@/hooks/use-colors";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LikeButton } from "@/components/like-button";
+
+const { width } = Dimensions.get("window");
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const colors = useColors();
   const [isInWishlist, setIsInWishlist] = useState(false);
 
   // Fetch product data
@@ -29,11 +34,11 @@ export default function ProductDetailScreen() {
   );
 
   // Wishlist mutations
-  const addToWishlistMutation = trpc.wishlist.add.useMutation({
+  const addMutation = trpc.wishlist.add.useMutation({
     onSuccess: () => setIsInWishlist(true),
   });
 
-  const removeFromWishlistMutation = trpc.wishlist.remove.useMutation({
+  const removeMutation = trpc.wishlist.remove.useMutation({
     onSuccess: () => setIsInWishlist(false),
   });
 
@@ -43,15 +48,17 @@ export default function ProductDetailScreen() {
     }
   }, [inWishlist]);
 
-  const handleWishlistToggle = () => {
-    if (isInWishlist) {
-      removeFromWishlistMutation.mutate({
-        productId: parseInt(id as string),
-      });
-    } else {
-      addToWishlistMutation.mutate({
-        productId: parseInt(id as string),
-      });
+  const handleWishlistToggle = async () => {
+    const nextState = !isInWishlist;
+    setIsInWishlist(nextState);
+    try {
+      if (nextState) {
+        await addMutation.mutateAsync({ productId: parseInt(id as string) });
+      } else {
+        await removeMutation.mutateAsync({ productId: parseInt(id as string) });
+      }
+    } catch (error) {
+      setIsInWishlist(!nextState);
     }
   };
 
@@ -68,7 +75,9 @@ export default function ProductDetailScreen() {
   if (isLoading) {
     return (
       <ScreenContainer>
-        <Text className="text-center text-muted">جاري التحميل...</Text>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
       </ScreenContainer>
     );
   }
@@ -76,116 +85,276 @@ export default function ProductDetailScreen() {
   if (!product) {
     return (
       <ScreenContainer>
-        <Text className="text-center text-muted">المنتج غير موجود</Text>
+        <View style={styles.centered}>
+          <Text style={{ color: colors.muted }}>المنتج غير موجود</Text>
+          <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
+            <Text style={{ color: colors.primary }}>العودة</Text>
+          </TouchableOpacity>
+        </View>
       </ScreenContainer>
     );
   }
 
   return (
-    <ScreenContainer className="p-0">
-      <ScrollView>
-        {/* Header with back button */}
-        <View className="flex-row items-center justify-between px-4 py-3 border-b border-border">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-xl">←</Text>
+    <ScreenContainer edges={["top"]} style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+            <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
           </TouchableOpacity>
-          <Text className="text-lg font-semibold text-foreground">تفاصيل المنتج</Text>
-          <TouchableOpacity onPress={handleWishlistToggle}>
-            <Text className="text-xl">{isInWishlist ? "❤️" : "🤍"}</Text>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>تفاصيل المنتج</Text>
+          <TouchableOpacity onPress={handleWishlistToggle} style={styles.headerButton}>
+            <IconSymbol 
+              name={isInWishlist ? "bookmark.fill" : "bookmark"} 
+              size={24} 
+              color={isInWishlist ? colors.primary : colors.foreground} 
+            />
           </TouchableOpacity>
         </View>
 
-        {/* Product Image Carousel */}
-        <ProductCarousel
-          images={product.image ? [product.image] : []}
-          productName={product.name}
-        />
-
-        {/* Product Info */}
-        <View className="p-4 gap-4">
-          {/* Name and Price */}
-          <View className="gap-2">
-            <Text className="text-2xl font-bold text-foreground">{product.name}</Text>
-            <Text className="text-3xl font-bold text-primary">{product.price} ر.س</Text>
-          </View>
-
-          {/* Category */}
-          {product.category && (
-            <View className="flex-row gap-2">
-              <View className="bg-primary px-3 py-1 rounded-full">
-                <Text className="text-white text-xs font-semibold">{product.category}</Text>
-              </View>
+        {/* Store Info Header (Instagram style) */}
+        {store && (
+          <TouchableOpacity 
+            style={styles.storeHeader}
+            onPress={() => router.push(`/(tabs)/store/${store.id}`)}
+          >
+            <View style={[styles.avatarContainer, { borderColor: colors.primary }]}>
+              <Image
+                source={{ uri: store.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(store.name)}&background=random` }}
+                style={styles.avatar}
+              />
             </View>
-          )}
-
-          {/* Description */}
-          {product.description && (
-            <View className="gap-2">
-              <Text className="text-sm font-semibold text-foreground">الوصف</Text>
-              <Text className="text-sm text-muted leading-relaxed">{product.description}</Text>
+            <View>
+              <Text style={[styles.storeName, { color: colors.foreground }]}>{store.name}</Text>
+              <Text style={[styles.storeLocation, { color: colors.muted }]}>{store.address || "متجر محلي"}</Text>
             </View>
-          )}
+          </TouchableOpacity>
+        )}
 
-          {/* Store Info */}
-          {store && (
-            <TouchableOpacity
-              onPress={() => router.push(`/(tabs)/store/${store.id}` as any)}
-              className="bg-surface border border-border rounded-lg p-4 gap-3"
-            >
-              <Text className="text-sm font-semibold text-foreground">معلومات المتجر</Text>
-              
-              <View className="gap-1">
-                <Text className="text-base font-semibold text-foreground">{store.name}</Text>
-                {store.rating && (
-                  <Text className="text-xs text-muted">⭐ {store.rating}</Text>
-                )}
-              </View>
+        {/* Product Image */}
+        <View style={[styles.imageContainer, { backgroundColor: colors.muted }]}>
+          <Image
+            source={{ uri: product.image || "https://via.placeholder.com/600" }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+        </View>
 
-              {store.address && (
-                <Text className="text-xs text-muted">📍 {store.address}</Text>
-              )}
-
-              {store.phone && (
-                <Text className="text-xs text-muted">📞 {store.phone}</Text>
-              )}
-
-              {store.openingHours && (
-                <Text className="text-xs text-muted">🕐 {store.openingHours}</Text>
-              )}
+        {/* Action Bar */}
+        <View style={styles.actionBar}>
+          <View style={styles.actionLeft}>
+            <LikeButton productId={product.id} size={28} showCount={false} />
+            <TouchableOpacity style={styles.actionItem}>
+              <IconSymbol name="bubble.right" size={26} color={colors.foreground} />
             </TouchableOpacity>
-          )}
+            <TouchableOpacity style={styles.actionItem}>
+              <IconSymbol name="paperplane" size={26} color={colors.foreground} />
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.priceTag, { backgroundColor: colors.primary }]}>
+            <Text style={styles.priceText}>{product.price} ر.س</Text>
+          </View>
+        </View>
 
-          {/* Stock Status */}
-          <View className="flex-row items-center gap-2">
-            <View
-              className={`w-3 h-3 rounded-full ${
-                product.inStock ? "bg-success" : "bg-error"
-              }`}
-            />
-            <Text className="text-sm text-muted">
-              {product.inStock ? "متوفر في المخزون" : "غير متوفر"}
+        {/* Content */}
+        <View style={styles.content}>
+          <Text style={[styles.productName, { color: colors.foreground }]}>{product.name}</Text>
+          
+          <View style={styles.divider} />
+          
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>الوصف</Text>
+          <Text style={[styles.description, { color: colors.foreground }]}>
+            {product.description || "لا يوجد وصف متوفر لهذا المنتج حالياً."}
+          </Text>
+
+          <View style={styles.divider} />
+
+          {/* Additional Info */}
+          <View style={styles.infoRow}>
+            <IconSymbol name="tag.fill" size={16} color={colors.muted} />
+            <Text style={[styles.infoText, { color: colors.muted }]}>الفئة: {product.category || "عام"}</Text>
+          </View>
+          
+          <View style={styles.infoRow}>
+            <View style={[styles.stockDot, { backgroundColor: product.inStock ? colors.success : colors.error }]} />
+            <Text style={[styles.infoText, { color: colors.muted }]}>
+              {product.inStock ? "متوفر حالياً" : "غير متوفر في المخزون"}
             </Text>
           </View>
         </View>
-      </ScrollView>
 
-      {/* Action Buttons */}
-      <View className="px-4 py-4 gap-3 border-t border-border">
-        <TouchableOpacity
-          onPress={handleContactStore}
-          className="bg-primary px-4 py-3 rounded-lg flex-row items-center justify-center gap-2"
-        >
-          <Text className="text-white">💬</Text>
-          <Text className="text-white font-semibold">تواصل عبر واتساب</Text>
-        </TouchableOpacity>
-
-        {store?.address && (
-          <TouchableOpacity className="bg-surface border border-border px-4 py-3 rounded-lg flex-row items-center justify-center gap-2">
-            <Text className="text-foreground">📍</Text>
-            <Text className="text-foreground font-semibold">عرض على الخريطة</Text>
+        {/* Contact Store Section */}
+        <View style={styles.contactSection}>
+          <TouchableOpacity
+            onPress={handleContactStore}
+            style={[styles.contactButton, { backgroundColor: colors.primary }]}
+          >
+            <IconSymbol name="phone.fill" size={20} color="white" />
+            <Text style={styles.contactButtonText}>تواصل عبر واتساب</Text>
           </TouchableOpacity>
-        )}
-      </View>
+          
+          {store?.address && (
+            <TouchableOpacity 
+              onPress={() => router.push(`/(tabs)/store/${store.id}/map`)}
+              style={[styles.mapButton, { borderColor: colors.primary, borderWidth: 1 }]}
+            >
+              <IconSymbol name="map.fill" size={20} color={colors.primary} />
+              <Text style={[styles.mapButtonText, { color: colors.primary }]}>موقع المتجر على الخريطة</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        <View style={{ height: 40 }} />
+      </ScrollView>
     </ScreenContainer>
   );
+
+const styles = StyleSheet.create({
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  headerButton: {
+    padding: 4,
+  },
+  storeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  avatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    padding: 2,
+  },
+  avatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 18,
+  },
+  storeName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  storeLocation: {
+    fontSize: 12,
+  },
+  imageContainer: {
+    width: width,
+    height: width,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  actionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  actionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+  },
+  actionItem: {
+    padding: 2,
+  },
+  priceTag: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  priceText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  content: {
+    paddingHorizontal: 16,
+  },
+  productName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  divider: {
+    height: 0.5,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    marginVertical: 16,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  description: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 14,
+  },
+  stockDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  contactSection: {
+    padding: 16,
+    gap: 12,
+    marginTop: 20,
+  },
+  contactButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 10,
+  },
+  contactButtonText: {
+    color: 'white', 
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  mapButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 10,
+  },
+  mapButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
 }

@@ -1,85 +1,65 @@
-import { FlatList, Text, View, TouchableOpacity, Image } from "react-native";
+import { FlatList, Text, View, TouchableOpacity, Image, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
+import { useColors } from "@/hooks/use-colors";
+
+const { width } = Dimensions.get("window");
+const COLUMN_WIDTH = width / 3;
 
 export default function WishlistScreen() {
   const router = useRouter();
+  const colors = useColors();
 
-  // Fetch wishlist items
-  const { data: wishlistItems = [], refetch } = trpc.wishlist.list.useQuery();
-
-  // Remove from wishlist mutation
-  const removeFromWishlistMutation = trpc.wishlist.remove.useMutation({
-    onSuccess: () => refetch(),
-  });
-
-  const handleRemoveFromWishlist = (productId: number) => {
-    removeFromWishlistMutation.mutate({ productId });
-  };
+  // Fetch wishlist items with product details
+  const { data: wishlistItems = [], isLoading, refetch } = trpc.wishlist.list.useQuery();
 
   const renderWishlistItem = ({ item }: { item: any }) => (
-    <View className="flex-1 m-2">
-      <TouchableOpacity
-        onPress={() => router.push(`/(tabs)/product/${item.productId}` as any)}
-        className="bg-surface rounded-lg overflow-hidden border border-border"
-      >
-        {/* Product Image */}
-        <View className="w-full h-40 bg-muted justify-center items-center">
-          <Image
-            source={{ uri: "https://via.placeholder.com/200x200?text=Product" }}
-            className="w-full h-full"
-            resizeMode="cover"
-          />
-        </View>
-
-        {/* Product Info */}
-        <View className="p-3 gap-2">
-          <Text className="text-sm font-semibold text-foreground" numberOfLines={1}>
-            المنتج #{item.productId}
-          </Text>
-
-          {/* Remove Button */}
-          <TouchableOpacity
-            onPress={() => handleRemoveFromWishlist(item.productId)}
-            className="bg-error px-3 py-2 rounded"
-          >
-            <Text className="text-white text-xs font-semibold text-center">
-              إزالة من الرغبات
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    </View>
+    <TouchableOpacity 
+      style={{ width: COLUMN_WIDTH, height: COLUMN_WIDTH, padding: 1 }}
+      onPress={() => router.push(`/(tabs)/product/${item.id}`)}
+    >
+      <Image 
+        source={{ uri: item.image || "https://via.placeholder.com/200" }} 
+        style={{ width: '100%', height: '100%' }}
+        resizeMode="cover"
+      />
+    </TouchableOpacity>
   );
 
   return (
-    <ScreenContainer className="p-0">
+    <ScreenContainer edges={["top"]} style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
-      <View className="px-4 py-4 border-b border-border">
-        <Text className="text-2xl font-bold text-foreground">قائمة الرغبات</Text>
-        <Text className="text-xs text-muted mt-1">
-          {wishlistItems.length} منتج محفوظ
-        </Text>
+      <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: colors.border }}>
+        <Text style={{ fontSize: 18, fontWeight: "bold", color: colors.foreground, textAlign: 'center' }}>المحفوظات</Text>
       </View>
 
       {/* Wishlist Items */}
-      {wishlistItems.length > 0 ? (
+      {isLoading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ color: colors.muted }}>جاري التحميل...</Text>
+        </View>
+      ) : wishlistItems.length > 0 ? (
         <FlatList
           data={wishlistItems}
           renderItem={renderWishlistItem}
           keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-          scrollEnabled
-          contentContainerStyle={{ paddingHorizontal: 4, paddingVertical: 8 }}
+          numColumns={3}
+          showsVerticalScrollIndicator={false}
         />
       ) : (
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-4xl mb-4">💔</Text>
-          <Text className="text-muted text-center">
-            قائمة الرغبات فارغة{"\n"}
-            ابدأ بحفظ المنتجات التي تعجبك
+        <View style={{ flex: 1, itemsCenter: "center", justifyContent: "center", padding: 40 }}>
+          <Text style={{ fontSize: 40, textAlign: 'center', marginBottom: 20 }}>🔖</Text>
+          <Text style={{ color: colors.foreground, fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 10 }}>لا توجد محفوظات</Text>
+          <Text style={{ color: colors.muted, textAlign: 'center' }}>
+            المنتجات التي تقوم بحفظها ستظهر هنا لتتمكن من العودة إليها لاحقاً
           </Text>
+          <TouchableOpacity 
+            onPress={() => router.push("/")}
+            style={{ marginTop: 30, backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8 }}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>استكشف المنتجات</Text>
+          </TouchableOpacity>
         </View>
       )}
     </ScreenContainer>

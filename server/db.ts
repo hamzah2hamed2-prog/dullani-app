@@ -230,11 +230,28 @@ export async function getUserWishlist(userId: number) {
   const db = await getDb();
   if (!db) return [];
 
-  const { wishlist } = await import("../drizzle/schema");
-  return db
-    .select()
+  const { wishlist, products, stores } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+
+  const results = await db
+    .select({
+      id: products.id,
+      storeId: products.storeId,
+      name: products.name,
+      description: products.description,
+      price: products.price,
+      image: products.image,
+      category: products.category,
+      inStock: products.inStock,
+      storeName: stores.name,
+      wishlistId: wishlist.id,
+    })
     .from(wishlist)
+    .innerJoin(products, eq(wishlist.productId, products.id))
+    .leftJoin(stores, eq(products.storeId, stores.id))
     .where(eq(wishlist.userId, userId));
+
+  return results;
 }
 
 export async function addToWishlist(data: any) {
