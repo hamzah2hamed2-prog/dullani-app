@@ -81,7 +81,7 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <MaterialIcons
-              name={focused ? "account-circle" : "account-circle-outline"}
+              name={focused ? "account-circle" : "account-circle"}
               size={28}
               color={color}
             />

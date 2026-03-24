@@ -86,7 +86,7 @@ export default function HomeScreen() {
               image={item.image || "https://via.placeholder.com/400"}
               storeName={(item as any).storeName || "متجر دلني"}
               category={item.category || "عام"}
-              description={item.description}
+              description={item.description || undefined}
               isWishlisted={wishlisted.has(item.id)}
               onWishlistToggle={handleWishlistToggle}
               likesCount={Math.floor(Math.random() * 100)} // Mock likes for demo
