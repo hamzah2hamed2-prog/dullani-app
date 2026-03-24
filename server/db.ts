@@ -745,14 +745,22 @@ export async function deleteComment(commentId: number, userId: number) {
 export async function getProductComments(productId: number, limit = 20, offset = 0) {
   const db = await getDb();
   if (!db) return [];
-  const { comments } = await import("../drizzle/schema");
-  const { eq: sqlEq } = await import("drizzle-orm");
+  const { comments, users } = await import("../drizzle/schema");
+  const { eq: sqlEq, desc } = await import("drizzle-orm");
   
   const result = await db
-    .select()
+    .select({
+      id: comments.id,
+      productId: comments.productId,
+      userId: comments.userId,
+      content: comments.content,
+      createdAt: comments.createdAt,
+      userName: users.name,
+    })
     .from(comments)
+    .leftJoin(users, sqlEq(comments.userId, users.id))
     .where(sqlEq(comments.productId, productId))
-    .orderBy(comments.createdAt)
+    .orderBy(desc(comments.createdAt))
     .limit(limit)
     .offset(offset);
   

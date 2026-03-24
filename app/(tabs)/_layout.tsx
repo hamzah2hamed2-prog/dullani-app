@@ -144,6 +144,10 @@ export default function TabLayout() {
         name="stores-map"
         options={{ href: null }}
       />
+      <Tabs.Screen
+        name="product/[id]/comments"
+        options={{ href: null }}
+      />
     </Tabs>
   );
 }

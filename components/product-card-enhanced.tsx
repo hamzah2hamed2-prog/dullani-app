@@ -108,7 +108,10 @@ export function ProductCardEnhanced({
       <View style={styles.actionBar}>
         <View style={styles.actionLeft}>
           <LikeButton productId={id} size={26} showCount={false} />
-          <TouchableOpacity onPress={handlePress} style={styles.actionItem}>
+          <TouchableOpacity 
+            onPress={() => router.push(`/(tabs)/product/${id}/comments`)} 
+            style={styles.actionItem}
+          >
             <IconSymbol name="bubble.right" size={24} color={colors.foreground} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionItem}>
@@ -138,7 +141,7 @@ export function ProductCardEnhanced({
         </View>
 
         {commentsCount > 0 && (
-          <TouchableOpacity onPress={handlePress}>
+          <TouchableOpacity onPress={() => router.push(`/(tabs)/product/${id}/comments`)}>
             <Text style={[styles.viewComments, { color: colors.muted }]}>
               عرض جميع التعليقات ({commentsCount})
             </Text>

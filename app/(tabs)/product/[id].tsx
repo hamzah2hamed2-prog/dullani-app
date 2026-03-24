@@ -145,7 +145,10 @@ export default function ProductDetailScreen() {
         <View style={styles.actionBar}>
           <View style={styles.actionLeft}>
             <LikeButton productId={product.id} size={28} showCount={false} />
-            <TouchableOpacity style={styles.actionItem}>
+            <TouchableOpacity 
+              style={styles.actionItem}
+              onPress={() => router.push(`/(tabs)/product/${product.id}/comments`)}
+            >
               <IconSymbol name="bubble.right" size={26} color={colors.foreground} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionItem}>

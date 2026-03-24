@@ -117,14 +117,9 @@ export default function ProfileScreen() {
         <TouchableOpacity style={[styles.tab, { borderBottomColor: colors.foreground, borderBottomWidth: 1 }]}>
           <IconSymbol name="house.fill" size={24} color={colors.foreground} />
         </TouchableOpacity>
-        {user?.accountType === "merchant" && (
-          <TouchableOpacity 
-            style={styles.tab}
-            onPress={() => router.push("/(tabs)/merchant/dashboard")}
-          >
-            <IconSymbol name="tag.fill" size={24} color={colors.muted} />
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity style={styles.tab}>
+          <IconSymbol name="tag.fill" size={24} color={colors.muted} />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.tab} onPress={logout}>
           <IconSymbol name="xmark" size={24} color={colors.error} />
         </TouchableOpacity>

@@ -1,166 +1,142 @@
-import { ScrollView, Text, View, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, FlatList } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
-import { useColors } from "@/hooks/use-colors";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useAuth } from "@/hooks/use-auth";
 
 export default function MerchantDashboardScreen() {
   const router = useRouter();
-  const colors = useColors();
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "analytics">("overview");
-
-  // Fetch user's store
-  const { data: store, isLoading: storeLoading } = trpc.stores.getByUserId.useQuery(undefined, {
-    enabled: !!user,
-  });
-
-  // Fetch store products
-  const { data: products = [], isLoading: productsLoading } = trpc.products.getByStore.useQuery(
-    { storeId: store?.id || 0 },
-    { enabled: !!store?.id }
+  const [activeTab, setActiveTab] = useState<"overview" | "products" | "analytics">(
+    "overview"
   );
 
-  if (storeLoading) {
-    return (
-      <ScreenContainer edges={["top"]} style={{ flex: 1, backgroundColor: colors.background }}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      </ScreenContainer>
-    );
-  }
+  // Fetch user's store (for now, we'll use a mock store)
+  const { data: user } = trpc.auth.me.useQuery();
+  // TODO: Implement getByUserId endpoint in backend
+  const store = {
+    id: 1,
+    name: "متجري",
+    address: "الرياض، السعودية",
+    phone: "+966501234567",
+    openingHours: "9:00 - 22:00",
+  };
 
-  if (!store) {
-    return (
-      <ScreenContainer edges={["top"]} style={{ flex: 1, backgroundColor: colors.background }}>
-        <View style={styles.centered}>
-          <IconSymbol name="storefront" size={64} color={colors.muted} />
-          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>ليس لديك متجر بعد</Text>
-          <Text style={[styles.emptySubtitle, { color: colors.muted }]}>قم بإنشاء متجرك للبدء في عرض منتجاتك</Text>
-          <TouchableOpacity 
-            style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-            onPress={() => router.push("/(tabs)/profile-setup")}
-          >
-            <Text style={styles.primaryButtonText}>إنشاء متجر</Text>
-          </TouchableOpacity>
-        </View>
-      </ScreenContainer>
-    );
-  }
+  // Fetch store products
+  const { data: products = [] } = trpc.products.getByStore.useQuery(
+    { storeId: store.id }
+  );
 
   // Calculate statistics
   const totalProducts = products.length;
-  const totalViews = products.reduce((sum, p) => sum + ((p as any).views || Math.floor(Math.random() * 100)), 0);
-  const totalClicks = products.reduce((sum, p) => sum + ((p as any).clicks || Math.floor(Math.random() * 50)), 0);
+  const totalViews = products.reduce((sum, p) => sum + ((p as any).views || 0), 0);
+  const totalClicks = products.reduce((sum, p) => sum + ((p as any).clicks || 0), 0);
 
   const renderOverview = () => (
-    <View style={styles.tabContent}>
+    <View className="gap-4">
       {/* Store Info Card */}
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.cardTitle, { color: colors.muted }]}>معلومات المتجر</Text>
-        <Text style={[styles.storeName, { color: colors.foreground }]}>{store.name}</Text>
-        <View style={styles.storeInfoList}>
+      <View className="bg-surface border border-border rounded-lg p-4">
+        <Text className="text-sm font-semibold text-muted mb-2">معلومات المتجر</Text>
+        <Text className="text-xl font-bold text-foreground mb-3">{store.name}</Text>
+        <View className="gap-2">
           {store?.address && (
-            <Text style={[styles.storeInfoText, { color: colors.muted }]}>📍 {store.address}</Text>
+            <Text className="text-xs text-muted">📍 {store.address}</Text>
           )}
           {store?.phone && (
-            <Text style={[styles.storeInfoText, { color: colors.muted }]}>📞 {store.phone}</Text>
+            <Text className="text-xs text-muted">📞 {store.phone}</Text>
           )}
           {store?.openingHours && (
-            <Text style={[styles.storeInfoText, { color: colors.muted }]}>🕐 {store.openingHours}</Text>
+            <Text className="text-xs text-muted">🕐 {store.openingHours}</Text>
           )}
         </View>
       </View>
 
       {/* Statistics Cards */}
-      <View style={styles.statsGrid}>
-        <View style={[styles.statCard, { backgroundColor: `${colors.primary}15`, borderColor: colors.primary }]}>
-          <Text style={[styles.statLabel, { color: colors.muted }]}>إجمالي المنتجات</Text>
-          <Text style={[styles.statValue, { color: colors.primary }]}>{totalProducts}</Text>
+      <View className="flex-row gap-2">
+        <View className="flex-1 bg-primary/10 rounded-lg p-4 border border-primary">
+          <Text className="text-xs text-muted mb-1">إجمالي المنتجات</Text>
+          <Text className="text-2xl font-bold text-primary">{totalProducts}</Text>
         </View>
-        <View style={[styles.statCard, { backgroundColor: `${colors.success}15`, borderColor: colors.success }]}>
-          <Text style={[styles.statLabel, { color: colors.muted }]}>المشاهدات</Text>
-          <Text style={[styles.statValue, { color: colors.success }]}>{totalViews}</Text>
+        <View className="flex-1 bg-success/10 rounded-lg p-4 border border-success">
+          <Text className="text-xs text-muted mb-1">المشاهدات</Text>
+          <Text className="text-2xl font-bold text-success">{totalViews}</Text>
         </View>
       </View>
 
-      <View style={styles.statsGrid}>
-        <View style={[styles.statCard, { backgroundColor: `${colors.warning}15`, borderColor: colors.warning }]}>
-          <Text style={[styles.statLabel, { color: colors.muted }]}>النقرات</Text>
-          <Text style={[styles.statValue, { color: colors.warning }]}>{totalClicks}</Text>
+      <View className="flex-row gap-2">
+        <View className="flex-1 bg-warning/10 rounded-lg p-4 border border-warning">
+          <Text className="text-xs text-muted mb-1">النقرات</Text>
+          <Text className="text-2xl font-bold text-warning">{totalClicks}</Text>
         </View>
-        <View style={[styles.statCard, { backgroundColor: `${colors.primary}15`, borderColor: colors.primary }]}>
-          <Text style={[styles.statLabel, { color: colors.muted }]}>معدل التحويل</Text>
-          <Text style={[styles.statValue, { color: colors.primary }]}>
+        <View className="flex-1 bg-primary/10 rounded-lg p-4 border border-primary">
+          <Text className="text-xs text-muted mb-1">معدل التحويل</Text>
+          <Text className="text-2xl font-bold text-primary">
             {totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : 0}%
           </Text>
         </View>
       </View>
 
       {/* Action Buttons */}
-      <View style={styles.actionButtons}>
+      <View className="gap-2">
         <TouchableOpacity
-          onPress={() => router.push("/(tabs)/merchant/add-product")}
-          style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+          onPress={() => router.push("/(tabs)/merchant/add-product" as any)}
+          className="bg-primary px-4 py-3 rounded-lg flex-row items-center justify-center gap-2"
         >
-          <IconSymbol name="plus" size={20} color="white" />
-          <Text style={styles.primaryButtonText}>إضافة منتج جديد</Text>
+          <Text className="text-white text-lg">➕</Text>
+          <Text className="text-white font-semibold">إضافة منتج جديد</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => router.push("/(tabs)/merchant/edit-store")}
-          style={[styles.secondaryButton, { borderColor: colors.primary, backgroundColor: colors.surface }]}
+          onPress={() => router.push("/(tabs)/merchant/edit-store" as any)}
+          className="bg-surface border border-primary px-4 py-3 rounded-lg flex-row items-center justify-center gap-2"
         >
-          <IconSymbol name="pencil" size={20} color={colors.primary} />
-          <Text style={[styles.secondaryButtonText, { color: colors.primary }]}>تعديل بيانات المتجر</Text>
+          <Text className="text-primary text-lg">✏️</Text>
+          <Text className="text-primary font-semibold">تعديل بيانات المتجر</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 
   const renderProducts = () => (
-    <View style={styles.tabContent}>
-      {productsLoading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
-      ) : products.length > 0 ? (
+    <View className="gap-3">
+      {products.length > 0 ? (
         products.map((product) => (
           <View
             key={product.id}
-            style={[styles.productItem, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            className="bg-surface border border-border rounded-lg p-4 flex-row items-center justify-between"
           >
-            <View style={styles.productInfo}>
-              <Text style={[styles.productName, { color: colors.foreground }]}>{product.name}</Text>
-              <Text style={[styles.productPrice, { color: colors.muted }]}>{product.price} ر.س</Text>
-              <View style={styles.productStats}>
-                <Text style={[styles.productStatText, { color: colors.muted }]}>👁️ {(product as any).views || Math.floor(Math.random() * 50)}</Text>
-                <Text style={[styles.productStatText, { color: colors.muted }]}>👆 {(product as any).clicks || Math.floor(Math.random() * 10)}</Text>
+            <View className="flex-1">
+              <Text className="text-sm font-semibold text-foreground">{product.name}</Text>
+              <Text className="text-xs text-muted mt-1">{product.price} ر.س</Text>
+              <View className="flex-row gap-3 mt-2">
+                <Text className="text-xs text-muted">👁️ {(product as any).views || 0}</Text>
+                <Text className="text-xs text-muted">👆 {(product as any).clicks || 0}</Text>
               </View>
             </View>
-            <View style={styles.productActions}>
+            <View className="flex-row gap-2">
               <TouchableOpacity
-                onPress={() => router.push(`/(tabs)/merchant/edit-product/${product.id}`)}
-                style={[styles.iconButton, { backgroundColor: `${colors.primary}15` }]}
+                onPress={() =>
+                  router.push(
+                    `/(tabs)/merchant/edit-product/${product.id}` as any
+                  )
+                }
+                className="bg-primary/10 p-2 rounded"
               >
-                <IconSymbol name="pencil" size={18} color={colors.primary} />
+                <Text className="text-primary">✏️</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.iconButton, { backgroundColor: `${colors.error}15` }]}>
-                <IconSymbol name="trash" size={18} color={colors.error} />
+              <TouchableOpacity className="bg-error/10 p-2 rounded">
+                <Text className="text-error">🗑️</Text>
               </TouchableOpacity>
             </View>
           </View>
         ))
       ) : (
-        <View style={[styles.emptyState, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.emptyStateText, { color: colors.muted }]}>لا توجد منتجات حالياً</Text>
+        <View className="bg-surface rounded-lg p-6 items-center">
+          <Text className="text-muted text-center">لا توجد منتجات حالياً</Text>
           <TouchableOpacity
-            onPress={() => router.push("/(tabs)/merchant/add-product")}
-            style={[styles.primaryButton, { backgroundColor: colors.primary, marginTop: 16 }]}
+            onPress={() => router.push("/(tabs)/merchant/add-product" as any)}
+            className="bg-primary px-4 py-2 rounded-lg mt-4"
           >
-            <Text style={styles.primaryButtonText}>إضافة أول منتج</Text>
+            <Text className="text-white text-sm font-semibold">إضافة أول منتج</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -168,40 +144,40 @@ export default function MerchantDashboardScreen() {
   );
 
   const renderAnalytics = () => (
-    <View style={styles.tabContent}>
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.cardTitle, { color: colors.foreground, marginBottom: 16 }]}>الإحصائيات</Text>
+    <View className="gap-4">
+      <View className="bg-surface border border-border rounded-lg p-4">
+        <Text className="text-sm font-semibold text-foreground mb-3">الإحصائيات</Text>
 
-        <View style={styles.analyticsList}>
-          <View style={[styles.analyticsRow, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.analyticsLabel, { color: colors.muted }]}>إجمالي المشاهدات</Text>
-            <Text style={[styles.analyticsValue, { color: colors.foreground }]}>{totalViews}</Text>
+        <View className="gap-3">
+          <View className="flex-row items-center justify-between pb-3 border-b border-border">
+            <Text className="text-xs text-muted">إجمالي المشاهدات</Text>
+            <Text className="text-sm font-bold text-foreground">{totalViews}</Text>
           </View>
 
-          <View style={[styles.analyticsRow, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.analyticsLabel, { color: colors.muted }]}>إجمالي النقرات</Text>
-            <Text style={[styles.analyticsValue, { color: colors.foreground }]}>{totalClicks}</Text>
+          <View className="flex-row items-center justify-between pb-3 border-b border-border">
+            <Text className="text-xs text-muted">إجمالي النقرات</Text>
+            <Text className="text-sm font-bold text-foreground">{totalClicks}</Text>
           </View>
 
-          <View style={[styles.analyticsRow, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.analyticsLabel, { color: colors.muted }]}>متوسط المشاهدات لكل منتج</Text>
-            <Text style={[styles.analyticsValue, { color: colors.foreground }]}>
+          <View className="flex-row items-center justify-between pb-3 border-b border-border">
+            <Text className="text-xs text-muted">متوسط المشاهدات لكل منتج</Text>
+            <Text className="text-sm font-bold text-foreground">
               {totalProducts > 0 ? (totalViews / totalProducts).toFixed(1) : 0}
             </Text>
           </View>
 
-          <View style={[styles.analyticsRow, { borderBottomWidth: 0 }]}>
-            <Text style={[styles.analyticsLabel, { color: colors.muted }]}>معدل التحويل</Text>
-            <Text style={[styles.analyticsValue, { color: colors.foreground }]}>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-xs text-muted">معدل التحويل</Text>
+            <Text className="text-sm font-bold text-foreground">
               {totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : 0}%
             </Text>
           </View>
         </View>
       </View>
 
-      <View style={[styles.tipCard, { backgroundColor: `${colors.primary}15`, borderColor: colors.primary }]}>
-        <Text style={[styles.tipTitle, { color: colors.primary }]}>💡 نصيحة</Text>
-        <Text style={[styles.tipText, { color: colors.foreground }]}>
+      <View className="bg-primary/10 border border-primary rounded-lg p-4">
+        <Text className="text-xs font-semibold text-primary mb-2">💡 نصيحة</Text>
+        <Text className="text-xs text-foreground leading-relaxed">
           أضف صور عالية الجودة وأوصافاً مفصلة لمنتجاتك لزيادة المشاهدات والنقرات
         </Text>
       </View>
@@ -209,252 +185,46 @@ export default function MerchantDashboardScreen() {
   );
 
   return (
-    <ScreenContainer edges={["top"]} style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-          <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>لوحة التحكم</Text>
-        <View style={{ width: 32 }} />
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.container}>
-          {/* Tab Navigation */}
-          <View style={styles.tabsContainer}>
-            {(["overview", "products", "analytics"] as const).map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                onPress={() => setActiveTab(tab)}
-                style={[
-                  styles.tab,
-                  {
-                    backgroundColor: activeTab === tab ? colors.primary : colors.surface,
-                    borderColor: activeTab === tab ? colors.primary : colors.border,
-                  }
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    { color: activeTab === tab ? "white" : colors.foreground }
-                  ]}
-                >
-                  {tab === "overview" ? "نظرة عامة" : tab === "products" ? "المنتجات" : "الإحصائيات"}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Tab Content */}
-          {activeTab === "overview" && renderOverview()}
-          {activeTab === "products" && renderProducts()}
-          {activeTab === "analytics" && renderAnalytics()}
+    <ScreenContainer className="p-4">
+      <ScrollView>
+        {/* Header */}
+        <View className="mb-6 pb-4 border-b border-border">
+          <Text className="text-2xl font-bold text-foreground">لوحة التحكم</Text>
+          <Text className="text-xs text-muted mt-1">إدارة متجرك ومنتجاتك</Text>
         </View>
+
+        {/* Tab Navigation */}
+        <View className="flex-row gap-2 mb-6">
+          {(["overview", "products", "analytics"] as const).map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              onPress={() => setActiveTab(tab)}
+              className={`flex-1 px-3 py-2 rounded-lg ${
+                activeTab === tab
+                  ? "bg-primary"
+                  : "bg-surface border border-border"
+              }`}
+            >
+              <Text
+                className={`text-xs font-semibold text-center ${
+                  activeTab === tab ? "text-white" : "text-foreground"
+                }`}
+              >
+                {tab === "overview"
+                  ? "نظرة عامة"
+                  : tab === "products"
+                  ? "المنتجات"
+                  : "الإحصائيات"}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Tab Content */}
+        {activeTab === "overview" && renderOverview()}
+        {activeTab === "products" && renderProducts()}
+        {activeTab === "analytics" && renderAnalytics()}
       </ScrollView>
     </ScreenContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  headerButton: {
-    padding: 4,
-  },
-  container: {
-    padding: 16,
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 24,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  tabText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  tabContent: {
-    gap: 16,
-  },
-  card: {
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  storeName: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  storeInfoList: {
-    gap: 8,
-  },
-  storeInfoText: {
-    fontSize: 13,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-  },
-  statLabel: {
-    fontSize: 12,
-    marginBottom: 8,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  actionButtons: {
-    gap: 12,
-    marginTop: 8,
-  },
-  primaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    gap: 8,
-  },
-  primaryButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  secondaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 8,
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  productItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  productInfo: {
-    flex: 1,
-  },
-  productName: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  productPrice: {
-    fontSize: 13,
-    marginBottom: 8,
-  },
-  productStats: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  productStatText: {
-    fontSize: 12,
-  },
-  productActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  iconButton: {
-    padding: 8,
-    borderRadius: 8,
-  },
-  emptyState: {
-    padding: 30,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  emptyStateText: {
-    fontSize: 15,
-  },
-  analyticsList: {
-    gap: 0,
-  },
-  analyticsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-  },
-  analyticsLabel: {
-    fontSize: 13,
-  },
-  analyticsValue: {
-    fontSize: 15,
-    fontWeight: 'bold',
-  },
-  tipCard: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  tipTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  tipText: {
-    fontSize: 13,
-    lineHeight: 20,
-  },
-});
