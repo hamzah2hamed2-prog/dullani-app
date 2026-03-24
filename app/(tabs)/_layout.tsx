@@ -20,11 +20,13 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
         tabBarShowLabel: false, // Instagram style: no labels
         tabBarStyle: {
-          height: 60 + bottomPadding,
+          height: 50 + bottomPadding,
           backgroundColor: colors.background,
           borderTopColor: colors.border,
           borderTopWidth: 0.5,
           paddingBottom: bottomPadding,
+          elevation: 0,
+          shadowOpacity: 0,
         },
       }}
     >
@@ -33,8 +35,8 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <MaterialIcons
-              name={focused ? "home" : "home-filled"} // Material icons home variants
-              size={28}
+              name={focused ? "home" : "home"}
+              size={30}
               color={color}
             />
           ),
@@ -45,8 +47,8 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <MaterialIcons
-              name="search"
-              size={28}
+              name={focused ? "search" : "search"}
+              size={30}
               color={color}
             />
           ),
@@ -58,7 +60,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <MaterialIcons
               name={focused ? "favorite" : "favorite-border"}
-              size={28}
+              size={30}
               color={color}
             />
           ),
@@ -70,7 +72,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <MaterialIcons
               name={focused ? "people" : "people-outline"}
-              size={28}
+              size={30}
               color={color}
             />
           ),
@@ -81,12 +83,66 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <MaterialIcons
-              name={focused ? "account-circle" : "account-circle"}
-              size={28}
+              name={focused ? "account-circle" : "account-circle-outline"}
+              size={30}
               color={color}
             />
           ),
         }}
+      />
+      
+      {/* Hidden merchant screens from tab bar but accessible via navigation */}
+      <Tabs.Screen
+        name="merchant/dashboard"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="merchant/add-product"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="merchant/edit-store"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="merchant/edit-product/[id]"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="product/[id]"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="store/[id]"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="store/[id]/map"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="image-search"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="profile-edit"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="profile-setup"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="search-results"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="stores-map"
+        options={{ href: null }}
       />
     </Tabs>
   );

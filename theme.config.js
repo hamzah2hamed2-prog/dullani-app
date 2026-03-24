@@ -1,27 +1,27 @@
 /** @type {const} */
 const themeColors = {
-  // Primary color - Modern teal/cyan for Dullani brand
-  primary: { light: '#0891B2', dark: '#06B6D4' },
+  // Primary color - Instagram Pink/Magenta
+  primary: { light: '#E1306C', dark: '#E1306C' },
   
-  // Background colors
-  background: { light: '#FFFFFF', dark: '#0F172A' },
+  // Background colors - Pure white and Pure black
+  background: { light: '#FFFFFF', dark: '#000000' },
   
-  // Surface colors - slightly elevated
-  surface: { light: '#F8FAFC', dark: '#1E293B' },
+  // Surface colors - Slightly off-white and very dark grey
+  surface: { light: '#FAFAFA', dark: '#121212' },
   
   // Text colors
-  foreground: { light: '#0F172A', dark: '#F1F5F9' },
+  foreground: { light: '#262626', dark: '#F5F5F5' },
   
   // Muted/secondary text
-  muted: { light: '#64748B', dark: '#94A3B8' },
+  muted: { light: '#8E8E8E', dark: '#A8A8A8' },
   
   // Border colors
-  border: { light: '#E2E8F0', dark: '#334155' },
+  border: { light: '#DBDBDB', dark: '#262626' },
   
   // Status colors
-  success: { light: '#10B981', dark: '#34D399' },
+  success: { light: '#0095F6', dark: '#0095F6' }, // Instagram Blue for links/success
   warning: { light: '#F59E0B', dark: '#FBBF24' },
-  error: { light: '#EF4444', dark: '#F87171' },
+  error: { light: '#ED4956', dark: '#ED4956' }, // Instagram Red
 };
 
 module.exports = { themeColors };
