@@ -14,146 +14,77 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.foreground,
         tabBarInactiveTintColor: colors.muted,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarShowLabel: false, // Instagram style: no labels
         tabBarStyle: {
-          paddingTop: 10,
-          paddingBottom: bottomPadding + 4,
-          height: 85 + bottomPadding,
+          height: 60 + bottomPadding,
           backgroundColor: colors.background,
           borderTopColor: colors.border,
-          borderTopWidth: 1,
-          elevation: 20,
-          shadowColor: "#000",
-          shadowOpacity: 0.15,
-          shadowRadius: 15,
-          shadowOffset: { width: 0, height: -8 },
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "600",
-          marginTop: 6,
-          marginBottom: 2,
-          letterSpacing: 0.3,
-        },
-        tabBarItemStyle: {
-          paddingVertical: 8,
-          paddingHorizontal: 0,
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
+          borderTopWidth: 0.5,
+          paddingBottom: bottomPadding,
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "الاستكشاف",
           tabBarIcon: ({ color, focused }) => (
-            <View style={styles.tabItem}>
-              <View
-                style={[
-                  styles.iconContainer,
-                  focused && { backgroundColor: color + "20" },
-                ]}
-              >
-                <MaterialIcons
-                  name="home"
-                  size={28}
-                  color={color}
-                />
-              </View>
-            </View>
+            <MaterialIcons
+              name={focused ? "home" : "home-filled"} // Material icons home variants
+              size={28}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
-          title: "البحث",
           tabBarIcon: ({ color, focused }) => (
-            <View style={styles.tabItem}>
-              <View
-                style={[
-                  styles.iconContainer,
-                  focused && { backgroundColor: color + "20" },
-                ]}
-              >
-                <MaterialIcons
-                  name="search"
-                  size={28}
-                  color={color}
-                />
-              </View>
-            </View>
+            <MaterialIcons
+              name="search"
+              size={28}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="wishlist"
         options={{
-          title: "المفضلة",
           tabBarIcon: ({ color, focused }) => (
-            <View style={styles.tabItem}>
-              <View
-                style={[
-                  styles.iconContainer,
-                  focused && { backgroundColor: color + "20" },
-                ]}
-              >
-                <MaterialIcons
-                  name={focused ? "favorite" : "favorite-border"}
-                  size={28}
-                  color={color}
-                />
-              </View>
-            </View>
+            <MaterialIcons
+              name={focused ? "favorite" : "favorite-border"}
+              size={28}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="following"
         options={{
-          title: "المتابعات",
           tabBarIcon: ({ color, focused }) => (
-            <View style={styles.tabItem}>
-              <View
-                style={[
-                  styles.iconContainer,
-                  focused && { backgroundColor: color + "20" },
-                ]}
-              >
-                <MaterialIcons
-                  name="people"
-                  size={28}
-                  color={color}
-                />
-              </View>
-            </View>
+            <MaterialIcons
+              name={focused ? "people" : "people-outline"}
+              size={28}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: "الملف الشخصي",
           tabBarIcon: ({ color, focused }) => (
-            <View style={styles.tabItem}>
-              <View
-                style={[
-                  styles.iconContainer,
-                  focused && { backgroundColor: color + "20" },
-                ]}
-              >
-                <MaterialIcons
-                  name="account-circle"
-                  size={28}
-                  color={color}
-                />
-              </View>
-            </View>
+            <MaterialIcons
+              name={focused ? "account-circle" : "account-circle-outline"}
+              size={28}
+              color={color}
+            />
           ),
         }}
       />

@@ -45,6 +45,11 @@ const MAPPING = {
   "bell.fill": "notifications",
   "share.fill": "share",
   "filter": "tune",
+  "ellipsis.horizontal": "more-horiz",
+  "bubble.right": "chat-bubble-outline",
+  "paperplane": "send",
+  "bookmark": "bookmark-border",
+  "bookmark.fill": "bookmark",
 } as const;
 
 /**

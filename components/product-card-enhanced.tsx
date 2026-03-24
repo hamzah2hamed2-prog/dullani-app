@@ -1,9 +1,10 @@
-import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions } from "react-native";
 import { IconSymbol } from "./ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useRouter } from "expo-router";
-import { StarRating } from "./star-rating";
 import { LikeButton } from "./like-button";
+
+const { width } = Dimensions.get("window");
 
 interface ProductCardEnhancedProps {
   id: number;
@@ -12,6 +13,7 @@ interface ProductCardEnhancedProps {
   image: string;
   storeName: string;
   category: string;
+  description?: string;
   onWishlistToggle?: (id: number, isWishlisted: boolean) => void;
   isWishlisted?: boolean;
   rating?: number;
@@ -27,6 +29,7 @@ export function ProductCardEnhanced({
   image,
   storeName,
   category,
+  description,
   onWishlistToggle,
   isWishlisted = false,
   rating = 0,
@@ -44,228 +47,205 @@ export function ProductCardEnhanced({
     });
   };
 
-  const handleWishlist = () => {
-    onWishlistToggle?.(id, !isWishlisted);
+  const handleStorePress = () => {
+    // Navigate to store profile if we have storeId, for now just a placeholder
+    // router.push(`/(tabs)/store/${storeId}`);
   };
 
   return (
-    <TouchableOpacity
-      onPress={handlePress}
-      activeOpacity={0.8}
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          shadowColor: colors.foreground,
-        },
-      ]}
-    >
-      {/* Image Container */}
-      <View style={[styles.imageContainer, { backgroundColor: colors.muted }]}>
-        <Image
-          source={{ uri: image }}
-          style={styles.image}
-          resizeMode="cover"
-        />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header - Instagram Style */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleStorePress} style={styles.headerLeft}>
+          <View style={[styles.avatarContainer, { borderColor: colors.primary }]}>
+            <Image
+              source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(storeName)}&background=random` }}
+              style={styles.avatar}
+            />
+          </View>
+          <View>
+            <Text style={[styles.storeName, { color: colors.foreground }]}>{storeName}</Text>
+            <Text style={[styles.location, { color: colors.muted }]}>{category}</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.moreButton}>
+          <IconSymbol name="ellipsis.horizontal" size={20} color={colors.foreground} />
+        </TouchableOpacity>
+      </View>
 
-        {/* Category Badge */}
-        <View
-          style={[
-            styles.categoryBadge,
-            { backgroundColor: colors.primary },
-          ]}
-        >
-          <Text style={styles.categoryText}>{category}</Text>
+      {/* Image - Instagram Style (1:1 Aspect Ratio) */}
+      <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
+        <View style={[styles.imageContainer, { backgroundColor: colors.muted }]}>
+          <Image
+            source={{ uri: image }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+          {/* Price Tag Overlay */}
+          <View style={[styles.priceTag, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
+            <Text style={styles.priceText}>{price} ر.س</Text>
+          </View>
         </View>
+      </TouchableOpacity>
 
-        {/* Wishlist Button */}
-        <TouchableOpacity
-          onPress={handleWishlist}
-          style={[
-            styles.wishlistButton,
-            {
-              backgroundColor: isWishlisted
-                ? colors.error
-                : "rgba(255,255,255,0.95)",
-            },
-          ]}
-          activeOpacity={0.7}
-        >
-          <IconSymbol
-            size={18}
-            name="heart.fill"
-            color={isWishlisted ? "white" : colors.error}
+      {/* Action Bar - Instagram Style */}
+      <View style={styles.actionBar}>
+        <View style={styles.actionLeft}>
+          <LikeButton productId={id} size={26} showCount={false} />
+          <TouchableOpacity onPress={handlePress} style={styles.actionItem}>
+            <IconSymbol name="bubble.right" size={24} color={colors.foreground} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem}>
+            <IconSymbol name="paperplane" size={24} color={colors.foreground} />
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity onPress={() => onWishlistToggle?.(id, !isWishlisted)}>
+          <IconSymbol 
+            name={isWishlisted ? "bookmark.fill" : "bookmark"} 
+            size={24} 
+            color={isWishlisted ? colors.primary : colors.foreground} 
           />
         </TouchableOpacity>
       </View>
 
-      {/* Content Container */}
+      {/* Social Stats & Caption */}
       <View style={styles.content}>
-        {/* Product Name */}
-        <Text
-          numberOfLines={2}
-          style={[styles.productName, { color: colors.foreground }]}
-        >
-          {name}
+        <Text style={[styles.likesCount, { color: colors.foreground }]}>
+          {likesCount || 0} إعجاب
         </Text>
-
-        {/* Store Name */}
-        <View style={styles.storeSection}>
-          <IconSymbol size={12} name="storefront.fill" color={colors.muted} />
-          <Text
-            numberOfLines={1}
-            style={[styles.storeName, { color: colors.muted }]}
-          >
-            {storeName}
+        
+        <View style={styles.captionContainer}>
+          <Text style={[styles.captionName, { color: colors.foreground }]}>{storeName}</Text>
+          <Text style={[styles.captionText, { color: colors.foreground }]}>
+            <Text style={{ fontWeight: 'bold' }}>{name}</Text> {description || "اكتشف هذا المنتج الرائع في متجرنا اليوم!"}
           </Text>
         </View>
 
-        {/* Rating */}
-        {rating > 0 && (
-          <View style={styles.ratingSection}>
-            <StarRating rating={rating} size={11} showCount={true} count={ratingCount} />
-          </View>
+        {commentsCount > 0 && (
+          <TouchableOpacity onPress={handlePress}>
+            <Text style={[styles.viewComments, { color: colors.muted }]}>
+              عرض جميع التعليقات ({commentsCount})
+            </Text>
+          </TouchableOpacity>
         )}
 
-        {/* Social Stats */}
-        <View style={styles.socialStats}>
-          <View style={styles.statItem}>
-            <LikeButton productId={id} size={16} showCount={true} />
-          </View>
-          {commentsCount !== undefined && commentsCount > 0 && (
-            <View style={styles.statItem}>
-              <IconSymbol size={14} name="paperplane.fill" color={colors.primary} />
-              <Text style={[styles.statText, { color: colors.muted }]}>
-                {commentsCount}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Price and Action */}
-        <View style={styles.footer}>
-          <Text style={[styles.price, { color: colors.primary }]}>
-            {price} ر.س
-          </Text>
-          <TouchableOpacity
-            onPress={handlePress}
-            style={[
-              styles.actionButton,
-              { backgroundColor: `${colors.primary}15` },
-            ]}
-            activeOpacity={0.7}
-          >
-            <IconSymbol size={14} name="chevron.right" color={colors.primary} />
-          </TouchableOpacity>
-        </View>
+        <Text style={[styles.timeAgo, { color: colors.muted }]}>منذ ساعتين</Text>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
-    overflow: "hidden",
-    borderWidth: 1,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 3,
+    width: width,
+    marginBottom: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
-  imageContainer: {
-    position: "relative",
-    width: "100%",
-    height: 160,
-    overflow: "hidden",
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-  image: {
-    width: "100%",
-    height: "100%",
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
-  categoryBadge: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    borderRadius: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  categoryText: {
-    color: "white",
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 0.2,
-  },
-  wishlistButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
+  avatarContainer: {
     width: 36,
     height: 36,
-    borderRadius: 9,
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: 18,
+    borderWidth: 1.5,
+    padding: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  content: {
-    padding: 12,
-    paddingBottom: 10,
-  },
-  productName: {
-    fontSize: 12,
-    fontWeight: "700",
-    marginBottom: 6,
-    lineHeight: 17,
-  },
-  storeSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
-    gap: 5,
-  },
-  storeName: {
-    fontSize: 10,
-    fontWeight: "500",
-    flex: 1,
-  },
-  ratingSection: {
-    marginBottom: 8,
-  },
-  socialStats: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 8,
-    paddingTop: 8,
-    borderTopWidth: 0.5,
-    borderTopColor: "rgba(0,0,0,0.1)",
-  },
-  statItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  statText: {
-    fontSize: 11,
-    fontWeight: "500",
-  },
-  footer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 4,
-  },
-  price: {
-    fontSize: 14,
-    fontWeight: "700",
-    letterSpacing: 0.2,
-  },
-  actionButton: {
+  avatar: {
     width: 28,
     height: 28,
+    borderRadius: 14,
+  },
+  storeName: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  location: {
+    fontSize: 11,
+  },
+  moreButton: {
+    padding: 4,
+  },
+  imageContainer: {
+    width: width,
+    height: width, // 1:1 Aspect Ratio
+    position: 'relative',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  priceTag: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 6,
-    alignItems: "center",
-    justifyContent: "center",
+  },
+  priceText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  actionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  actionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  actionItem: {
+    padding: 2,
+  },
+  content: {
+    paddingHorizontal: 14,
+    paddingBottom: 12,
+  },
+  likesCount: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  captionContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+    marginBottom: 6,
+  },
+  captionName: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  captionText: {
+    fontSize: 13,
+    lineHeight: 18,
+    flex: 1,
+  },
+  viewComments: {
+    fontSize: 13,
+    marginBottom: 6,
+  },
+  timeAgo: {
+    fontSize: 10,
+    textTransform: 'uppercase',
   },
 });
+

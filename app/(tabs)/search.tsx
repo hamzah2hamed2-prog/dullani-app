@@ -1,11 +1,13 @@
-import { FlatList, Text, View, TouchableOpacity, TextInput, ActivityIndicator } from "react-native";
+import { FlatList, Text, View, TouchableOpacity, TextInput, ActivityIndicator, Image, Dimensions } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
-import { ProductCardEnhanced } from "@/components/product-card-enhanced";
 import { useColors } from "@/hooks/use-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+
+const { width } = Dimensions.get("window");
+const COLUMN_WIDTH = width / 3;
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -35,63 +37,53 @@ export default function SearchScreen() {
     return matchesSearch && matchesCategory;
   });
 
-  const renderProductCard = ({ item }: { item: any }) => (
-    <View style={{ flex: 1, margin: 8 }}>
-      <ProductCardEnhanced
-        id={item.id}
-        name={item.name}
-        price={item.price}
-        image={item.image || "https://via.placeholder.com/200?text=No+Image"}
-        storeName={item.storeName || "متجر غير معروف"}
-        category={item.category || "عام"}
-        rating={0} // Can be added later
-        ratingCount={0}
+  const renderProductItem = ({ item }: { item: any }) => (
+    <TouchableOpacity 
+      style={{ width: COLUMN_WIDTH, height: COLUMN_WIDTH, padding: 1 }}
+      onPress={() => router.push(`/(tabs)/product/${item.id}`)}
+    >
+      <Image 
+        source={{ uri: item.image || "https://via.placeholder.com/200" }} 
+        style={{ width: '100%', height: '100%' }}
+        resizeMode="cover"
       />
-    </View>
+    </TouchableOpacity>
   );
 
   return (
-    <ScreenContainer style={{ padding: 0 }}>
-      {/* Header */}
-      <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <Text style={{ fontSize: 24, fontWeight: "bold", color: colors.foreground, marginBottom: 16, textAlign: "right" }}>البحث</Text>
-
-        {/* Search Input */}
-        <View style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-          <IconSymbol name="magnifyingglass" size={20} color={colors.muted} />
+    <ScreenContainer edges={["top"]} style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Search Input Bar */}
+      <View style={{ paddingHorizontal: 12, paddingVertical: 10 }}>
+        <View style={{ 
+          backgroundColor: colors.surface, 
+          borderRadius: 10, 
+          paddingHorizontal: 12, 
+          paddingVertical: 8, 
+          flexDirection: "row", 
+          alignItems: "center" 
+        }}>
+          <IconSymbol name="magnifyingglass" size={16} color={colors.muted} />
           <TextInput
-            placeholder="ابحث عن منتجات..."
+            placeholder="البحث"
             value={searchQuery}
             onChangeText={setSearchQuery}
-            style={{ marginRight: 12, flex: 1, color: colors.foreground, textAlign: "right", fontSize: 16 }}
+            style={{ 
+              marginLeft: 8, 
+              flex: 1, 
+              color: colors.foreground, 
+              textAlign: "right", 
+              fontSize: 16,
+              paddingVertical: 0
+            }}
             placeholderTextColor={colors.muted}
           />
         </View>
-
-        {/* Quick Action Buttons */}
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          <TouchableOpacity
-            onPress={() => router.push("/(tabs)/image-search")}
-            style={{ flex: 1, backgroundColor: `${colors.primary}15`, borderWidth: 1, borderColor: colors.primary, borderRadius: 12, padding: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}
-          >
-            <IconSymbol name="camera.fill" size={18} color={colors.primary} />
-            <Text style={{ fontSize: 12, fontWeight: "600", color: colors.primary }}>البحث بالصور</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.push("/(tabs)/stores-map")}
-            style={{ flex: 1, backgroundColor: `${colors.primary}15`, borderWidth: 1, borderColor: colors.primary, borderRadius: 12, padding: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}
-          >
-            <IconSymbol name="map.fill" size={18} color={colors.primary} />
-            <Text style={{ fontSize: 12, fontWeight: "600", color: colors.primary }}>المتاجر</Text>
-          </TouchableOpacity>
-        </View>
       </View>
 
-      {/* Categories Filter */}
-      <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted, marginBottom: 8, textAlign: "right" }}>الفئات</Text>
+      {/* Quick Filter Categories */}
+      <View style={{ paddingBottom: 10 }}>
         {categoriesLoading ? (
-          <ActivityIndicator color={colors.primary} />
+          <ActivityIndicator color={colors.primary} size="small" />
         ) : (
           <FlatList
             data={[{ id: 0, name: "الكل" }, ...categories]}
@@ -99,26 +91,18 @@ export default function SearchScreen() {
               const isSelected = item.name === "الكل" ? !selectedCategory : selectedCategory === item.name;
               return (
                 <TouchableOpacity
-                  onPress={() =>
-                    setSelectedCategory(item.name === "الكل" ? null : item.name)
-                  }
+                  onPress={() => setSelectedCategory(item.name === "الكل" ? null : item.name)}
                   style={{
                     marginLeft: 8,
                     paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    borderRadius: 20,
-                    backgroundColor: isSelected ? colors.primary : colors.surface,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                    backgroundColor: isSelected ? colors.surface : colors.background,
                     borderWidth: 1,
-                    borderColor: isSelected ? colors.primary : colors.border
+                    borderColor: colors.border
                   }}
                 >
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: "600",
-                      color: isSelected ? "white" : colors.foreground
-                    }}
-                  >
+                  <Text style={{ fontSize: 13, fontWeight: "600", color: isSelected ? colors.primary : colors.foreground }}>
                     {item.name}
                   </Text>
                 </TouchableOpacity>
@@ -126,20 +110,14 @@ export default function SearchScreen() {
             }}
             keyExtractor={(item) => item.id.toString()}
             horizontal
-            inverted // Support RTL
+            inverted
             showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 10 }}
           />
         )}
       </View>
 
-      {/* Results Count */}
-      <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-        <Text style={{ fontSize: 12, color: colors.muted, textAlign: "right" }}>
-          {filteredProducts.length} منتج
-        </Text>
-      </View>
-
-      {/* Products Grid */}
+      {/* Explore Grid */}
       {productsLoading ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -147,13 +125,13 @@ export default function SearchScreen() {
       ) : filteredProducts.length > 0 ? (
         <FlatList
           data={filteredProducts}
-          renderItem={renderProductCard}
+          renderItem={renderProductItem}
           keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-          contentContainerStyle={{ paddingHorizontal: 8 }}
+          numColumns={3}
+          showsVerticalScrollIndicator={false}
         />
       ) : (
-        <View style={{ flex: 1, itemsCenter: "center", justifyContent: "center" }}>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <Text style={{ color: colors.muted }}>لا توجد نتائج</Text>
         </View>
       )}

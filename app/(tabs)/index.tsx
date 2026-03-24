@@ -1,43 +1,39 @@
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import {
-  ScrollView,
   View,
   Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
-import { SearchBarEnhanced } from "@/components/search-bar-enhanced";
 import { ProductCardEnhanced } from "@/components/product-card-enhanced";
-import { ScreenHeader } from "@/components/screen-header";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
-import { FeaturedSection } from "@/components/featured-section";
-import { PopularStoresSection } from "@/components/popular-stores-section";
+import { StoriesSection } from "@/components/stories-section";
 
 export default function HomeScreen() {
   const router = useRouter();
   const colors = useColors();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   const [wishlisted, setWishlisted] = useState<Set<number>>(new Set());
 
   // Fetch real data from tRPC
-  const { data: products = [], isLoading: productsLoading } = trpc.products.list.useQuery({
+  const { data: products = [], isLoading: productsLoading, refetch } = trpc.products.list.useQuery({
     limit: 20,
     offset: 0,
   });
 
-  const { data: categories = [], isLoading: categoriesLoading } = trpc.categories.list.useQuery();
-  const { data: stores = [], isLoading: storesLoading } = trpc.stores.list.useQuery({
-    limit: 10,
-    offset: 0,
-  });
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
 
   const handleWishlistToggle = (id: number, isWishlisted: boolean) => {
     const newWishlisted = new Set(wishlisted);
@@ -49,139 +45,61 @@ export default function HomeScreen() {
     setWishlisted(newWishlisted);
   };
 
-  const filteredProducts = products.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || p.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  // Map stores to the format expected by PopularStoresSection
-  const mappedStores = stores.map((s) => ({
-    id: s.id,
-    name: s.name,
-    logo: s.logo || "https://via.placeholder.com/100?text=Store",
-    rating: parseFloat(s.rating || "0"),
-    ratingCount: 0, // In a real app, this would come from the database
-    category: "متجر",
-  }));
-
-  // Map products to the format expected by FeaturedSection
-  const mappedProducts = filteredProducts.map((p) => ({
-    id: p.id,
-    name: p.name,
-    price: p.price,
-    image: p.image || "https://via.placeholder.com/200?text=No+Image",
-    storeName: (p as any).storeName || "متجر غير معروف",
-    category: p.category || "عام",
-  }));
-
-  const isLoading = productsLoading || categoriesLoading || storesLoading;
+  const renderHeader = () => (
+    <View>
+      <StoriesSection />
+    </View>
+  );
 
   return (
-    <ScreenContainer style={styles.container}>
-      {/* Header */}
-      <ScreenHeader
-        title="دلني"
-        subtitle="اكتشف أفضل المنتجات المحلية"
-        rightAction={{
-          icon: "bell.fill",
-          onPress: () => router.push("/(tabs)/notifications"),
-        }}
-      />
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Search Bar */}
-        <View style={styles.searchSection}>
-          <SearchBarEnhanced
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onClear={() => setSearchQuery("")}
-            onFilterPress={() => router.push("/(tabs)/search")}
-          />
+    <ScreenContainer edges={["top"]} style={styles.container}>
+      {/* Instagram Style Header */}
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: 'rgba(0,0,0,0.05)', borderBottomWidth: 1 }]}>
+        <Text style={[styles.logo, { color: colors.foreground }]}>دلني</Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.headerIcon}>
+            <IconSymbol name="plus.circle.fill" size={24} color={colors.foreground} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerIcon} onPress={() => router.push("/(tabs)/notifications")}>
+            <IconSymbol name="heart.fill" size={24} color={colors.foreground} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerIcon}>
+            <IconSymbol name="paperplane" size={24} color={colors.foreground} />
+          </TouchableOpacity>
         </View>
+      </View>
 
-        {/* Categories Section */}
-        <View style={styles.categoriesSection}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            الفئات
-          </Text>
-          {categoriesLoading ? (
-            <ActivityIndicator color={colors.primary} />
-          ) : (
-            <FlatList
-              data={[{ id: 0, name: "الكل" }, ...categories]}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => {
-                const isSelected = item.name === "الكل" ? !selectedCategory : selectedCategory === item.name;
-                return (
-                  <TouchableOpacity
-                    onPress={() => setSelectedCategory(item.name === "الكل" ? null : item.name)}
-                    style={[
-                      styles.categoryButton,
-                      {
-                        backgroundColor: isSelected ? colors.primary : colors.surface,
-                        borderColor: isSelected ? colors.primary : colors.border,
-                      },
-                    ]}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.categoryButtonText,
-                        { color: isSelected ? "white" : colors.foreground },
-                      ]}
-                    >
-                      {item.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              }}
-              scrollEventThrottle={16}
-              contentContainerStyle={styles.categoriesList}
+      {productsLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={products}
+          keyExtractor={(item) => item.id.toString()}
+          ListHeaderComponent={renderHeader}
+          renderItem={({ item }) => (
+            <ProductCardEnhanced
+              id={item.id}
+              name={item.name}
+              price={item.price}
+              image={item.image || "https://via.placeholder.com/400"}
+              storeName={(item as any).storeName || "متجر دلني"}
+              category={item.category || "عام"}
+              description={item.description}
+              isWishlisted={wishlisted.has(item.id)}
+              onWishlistToggle={handleWishlistToggle}
+              likesCount={Math.floor(Math.random() * 100)} // Mock likes for demo
+              commentsCount={Math.floor(Math.random() * 20)} // Mock comments for demo
             />
           )}
-        </View>
-
-        {/* Popular Stores Section */}
-        <PopularStoresSection
-          stores={mappedStores}
-          onViewAll={() => router.push("/(tabs)/search")}
-          isLoading={storesLoading}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          contentContainerStyle={styles.listContent}
         />
-
-        {/* Featured Products Section */}
-        <FeaturedSection
-          title="المنتجات المميزة"
-          subtitle="مختاراتنا لك لهذا الأسبوع"
-          products={mappedProducts}
-          onViewAll={() => router.push("/(tabs)/search")}
-          isLoading={productsLoading}
-        />
-
-        {/* Promotional Banner */}
-        <View
-          style={[
-            styles.promotionalBanner,
-            { backgroundColor: colors.primary },
-          ]}
-        >
-          <View style={styles.bannerContent}>
-            <View style={styles.bannerText}>
-              <Text style={styles.bannerTitle}>عرض خاص</Text>
-              <Text style={styles.bannerSubtitle}>
-                احصل على خصم 20% على أول طلب عند استخدام كود "DULLANI20"
-              </Text>
-            </View>
-            <IconSymbol size={40} name="tag.fill" color="white" />
-          </View>
-        </View>
-      </ScrollView>
+      )}
     </ScreenContainer>
   );
 }
@@ -190,97 +108,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 24,
-  },
-  searchSection: {
-    paddingTop: 12,
-  },
-  categoriesSection: {
-    marginTop: 20,
-    paddingHorizontal: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 12,
-    letterSpacing: 0.3,
-  },
-  categoriesList: {
-    paddingRight: 16,
-  },
-  categoryButton: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    marginRight: 8,
-    justifyContent: "center",
-    alignItems: "center",
+    zIndex: 10,
   },
-  categoryButtonText: {
-    fontSize: 13,
-    fontWeight: "600",
-    letterSpacing: 0.2,
+  logo: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    fontFamily: 'System', // Instagram uses a specific font, but we'll use bold system font
   },
-  productsSection: {
-    marginTop: 24,
-    paddingHorizontal: 16,
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 18,
   },
-  productsHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
+  headerIcon: {
+    padding: 2,
   },
-  viewAllButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  viewAllText: {
-    fontSize: 12,
-    fontWeight: "600",
-    letterSpacing: 0.2,
-  },
-  productsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  productGridItem: {
-    width: "48%",
-  },
-  promotionalBanner: {
-    marginHorizontal: 16,
-    marginTop: 24,
-    borderRadius: 16,
-    padding: 20,
-    overflow: "hidden",
-  },
-  bannerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  bannerText: {
+  loadingContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  bannerTitle: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 6,
-    letterSpacing: 0.3,
-  },
-  bannerSubtitle: {
-    color: "rgba(255,255,255,0.85)",
-    fontSize: 13,
-    fontWeight: "500",
-    lineHeight: 18,
+  listContent: {
+    paddingBottom: 20,
   },
 });
+
