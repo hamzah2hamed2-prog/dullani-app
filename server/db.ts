@@ -95,12 +95,27 @@ export async function getProducts(limit: number = 20, offset: number = 0) {
   const db = await getDb();
   if (!db) return [];
 
-  const { products } = await import("../drizzle/schema");
-  return db
-    .select()
+  const { products, stores } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+
+  const results = await db
+    .select({
+      id: products.id,
+      storeId: products.storeId,
+      name: products.name,
+      description: products.description,
+      price: products.price,
+      image: products.image,
+      category: products.category,
+      inStock: products.inStock,
+      storeName: stores.name,
+    })
     .from(products)
+    .leftJoin(stores, eq(products.storeId, stores.id))
     .limit(limit)
     .offset(offset);
+
+  return results;
 }
 
 export async function getProductsByStore(storeId: number) {

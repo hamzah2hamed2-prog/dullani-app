@@ -7,6 +7,7 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
@@ -15,85 +16,30 @@ import { ProductCardEnhanced } from "@/components/product-card-enhanced";
 import { ScreenHeader } from "@/components/screen-header";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  storeName: string;
-  category: string;
-}
-
-// Mock data for MVP
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: "1",
-    name: "حذاء رياضي",
-    price: 299,
-    image: "https://via.placeholder.com/200x200?text=Shoe",
-    storeName: "متجر الأحذية",
-    category: "أحذية",
-  },
-  {
-    id: "2",
-    name: "ساعة ذكية",
-    price: 599,
-    image: "https://via.placeholder.com/200x200?text=Watch",
-    storeName: "متجر الإلكترونيات",
-    category: "إلكترونيات",
-  },
-  {
-    id: "3",
-    name: "عطر فاخر",
-    price: 199,
-    image: "https://via.placeholder.com/200x200?text=Perfume",
-    storeName: "متجر العطور",
-    category: "عطور",
-  },
-  {
-    id: "4",
-    name: "حقيبة يد",
-    price: 449,
-    image: "https://via.placeholder.com/200x200?text=Bag",
-    storeName: "متجر الموضة",
-    category: "ملابس",
-  },
-  {
-    id: "5",
-    name: "نظارة شمسية",
-    price: 349,
-    image: "https://via.placeholder.com/200x200?text=Sunglasses",
-    storeName: "متجر الملحقات",
-    category: "ملحقات",
-  },
-  {
-    id: "6",
-    name: "حزام جلدي",
-    price: 149,
-    image: "https://via.placeholder.com/200x200?text=Belt",
-    storeName: "متجر الموضة",
-    category: "ملحقات",
-  },
-];
-
-const CATEGORIES = [
-  { id: "1", name: "الكل", icon: "star.fill" },
-  { id: "2", name: "أحذية", icon: "bag.fill" },
-  { id: "3", name: "ملابس", icon: "tag.fill" },
-  { id: "4", name: "إلكترونيات", icon: "star.fill" },
-  { id: "5", name: "عطور", icon: "star.fill" },
-];
+import { trpc } from "@/lib/trpc";
+import { FeaturedSection } from "@/components/featured-section";
+import { PopularStoresSection } from "@/components/popular-stores-section";
 
 export default function HomeScreen() {
   const router = useRouter();
   const colors = useColors();
-  const [products] = useState<Product[]>(MOCK_PRODUCTS);
-  const [selectedCategory, setSelectedCategory] = useState("1");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [wishlisted, setWishlisted] = useState<Set<string>>(new Set());
+  const [wishlisted, setWishlisted] = useState<Set<number>>(new Set());
 
-  const handleWishlistToggle = (id: string, isWishlisted: boolean) => {
+  // Fetch real data from tRPC
+  const { data: products = [], isLoading: productsLoading } = trpc.products.list.useQuery({
+    limit: 20,
+    offset: 0,
+  });
+
+  const { data: categories = [], isLoading: categoriesLoading } = trpc.categories.list.useQuery();
+  const { data: stores = [], isLoading: storesLoading } = trpc.stores.list.useQuery({
+    limit: 10,
+    offset: 0,
+  });
+
+  const handleWishlistToggle = (id: number, isWishlisted: boolean) => {
     const newWishlisted = new Set(wishlisted);
     if (isWishlisted) {
       newWishlisted.add(id);
@@ -103,9 +49,33 @@ export default function HomeScreen() {
     setWishlisted(newWishlisted);
   };
 
-  const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = products.filter((p) => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = !selectedCategory || p.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Map stores to the format expected by PopularStoresSection
+  const mappedStores = stores.map((s) => ({
+    id: s.id,
+    name: s.name,
+    logo: s.logo || "https://via.placeholder.com/100?text=Store",
+    rating: parseFloat(s.rating || "0"),
+    ratingCount: 0, // In a real app, this would come from the database
+    category: "متجر",
+  }));
+
+  // Map products to the format expected by FeaturedSection
+  const mappedProducts = filteredProducts.map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    image: p.image || "https://via.placeholder.com/200?text=No+Image",
+    storeName: (p as any).storeName || "متجر غير معروف",
+    category: p.category || "عام",
+  }));
+
+  const isLoading = productsLoading || categoriesLoading || storesLoading;
 
   return (
     <ScreenContainer style={styles.container}>
@@ -115,7 +85,7 @@ export default function HomeScreen() {
         subtitle="اكتشف أفضل المنتجات المحلية"
         rightAction={{
           icon: "bell.fill",
-          onPress: () => {},
+          onPress: () => router.push("/(tabs)/notifications"),
         }}
       />
 
@@ -139,89 +109,60 @@ export default function HomeScreen() {
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
             الفئات
           </Text>
-          <FlatList
-            data={CATEGORIES}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => setSelectedCategory(item.id)}
-                style={[
-                  styles.categoryButton,
-                  {
-                    backgroundColor:
-                      selectedCategory === item.id
-                        ? colors.primary
-                        : colors.surface,
-                    borderColor:
-                      selectedCategory === item.id
-                        ? colors.primary
-                        : colors.border,
-                  },
-                ]}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[
-                    styles.categoryButtonText,
-                    {
-                      color:
-                        selectedCategory === item.id
-                          ? "white"
-                          : colors.foreground,
-                    },
-                  ]}
-                >
-                  {item.name}
-                </Text>
-              </TouchableOpacity>
-            )}
-            scrollEventThrottle={16}
-            contentContainerStyle={styles.categoriesList}
-          />
+          {categoriesLoading ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : (
+            <FlatList
+              data={[{ id: 0, name: "الكل" }, ...categories]}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => {
+                const isSelected = item.name === "الكل" ? !selectedCategory : selectedCategory === item.name;
+                return (
+                  <TouchableOpacity
+                    onPress={() => setSelectedCategory(item.name === "الكل" ? null : item.name)}
+                    style={[
+                      styles.categoryButton,
+                      {
+                        backgroundColor: isSelected ? colors.primary : colors.surface,
+                        borderColor: isSelected ? colors.primary : colors.border,
+                      },
+                    ]}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryButtonText,
+                        { color: isSelected ? "white" : colors.foreground },
+                      ]}
+                    >
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
+              scrollEventThrottle={16}
+              contentContainerStyle={styles.categoriesList}
+            />
+          )}
         </View>
 
-        {/* Products Section */}
-        <View style={styles.productsSection}>
-          <View style={styles.productsHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              المنتجات المميزة
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/(tabs)/search")}
-              style={styles.viewAllButton}
-            >
-              <Text style={[styles.viewAllText, { color: colors.primary }]}>
-                عرض الكل
-              </Text>
-              <IconSymbol
-                size={14}
-                name="chevron.right"
-                color={colors.primary}
-              />
-            </TouchableOpacity>
-          </View>
+        {/* Popular Stores Section */}
+        <PopularStoresSection
+          stores={mappedStores}
+          onViewAll={() => router.push("/(tabs)/search")}
+          isLoading={storesLoading}
+        />
 
-          <View style={styles.productsGrid}>
-            {filteredProducts.map((product) => (
-              <View key={product.id} style={styles.productGridItem}>
-                <ProductCardEnhanced
-                  id={parseInt(product.id)}
-                  name={product.name}
-                  price={product.price.toString()}
-                  image={product.image}
-                  storeName={product.storeName}
-                  category={product.category}
-                  isWishlisted={wishlisted.has(product.id)}
-                  onWishlistToggle={(id, isWishlisted) =>
-                    handleWishlistToggle(id.toString(), isWishlisted)
-                  }
-                />
-              </View>
-            ))}
-          </View>
-        </View>
+        {/* Featured Products Section */}
+        <FeaturedSection
+          title="المنتجات المميزة"
+          subtitle="مختاراتنا لك لهذا الأسبوع"
+          products={mappedProducts}
+          onViewAll={() => router.push("/(tabs)/search")}
+          isLoading={productsLoading}
+        />
 
         {/* Promotional Banner */}
         <View
@@ -234,7 +175,7 @@ export default function HomeScreen() {
             <View style={styles.bannerText}>
               <Text style={styles.bannerTitle}>عرض خاص</Text>
               <Text style={styles.bannerSubtitle}>
-                احصل على خصم 20% على أول طلب
+                احصل على خصم 20% على أول طلب عند استخدام كود "DULLANI20"
               </Text>
             </View>
             <IconSymbol size={40} name="tag.fill" color="white" />

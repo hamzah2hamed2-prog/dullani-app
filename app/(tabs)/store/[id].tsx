@@ -1,13 +1,17 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ScrollView, Text, View, TouchableOpacity, Image, FlatList, Linking } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, Image, FlatList, Linking, ActivityIndicator } from "react-native";
 import { useState, useEffect } from "react";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { FollowButton } from "@/components/follow-button";
+import { useColors } from "@/hooks/use-colors";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { FeaturedSection } from "@/components/featured-section";
 
 export default function StoreProfileScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const colors = useColors();
   const [followersCount, setFollowersCount] = useState(0);
 
   // Fetch store data
@@ -17,7 +21,7 @@ export default function StoreProfileScreen() {
   );
 
   // Fetch store products
-  const { data: products = [] } = trpc.products.getByStore.useQuery(
+  const { data: products = [], isLoading: productsLoading } = trpc.products.getByStore.useQuery(
     { storeId: parseInt(id as string) },
     { enabled: !!id }
   );
@@ -36,7 +40,7 @@ export default function StoreProfileScreen() {
 
   const handleContactStore = () => {
     if (store?.phone) {
-      const message = `مرحا، أود الاستفسار عن منتجاتك على تطبيق دلني`;
+      const message = `مرحبا، أود الاستفسار عن منتجاتك على تطبيق دلني`;
       const whatsappUrl = `https://wa.me/${store.phone}?text=${encodeURIComponent(message)}`;
       Linking.openURL(whatsappUrl).catch(() => {
         alert("لا يمكن فتح واتساب");
@@ -44,32 +48,13 @@ export default function StoreProfileScreen() {
     }
   };
 
-  const renderProductCard = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      onPress={() => router.push(`/(tabs)/product/${item.id}` as any)}
-      className="bg-surface rounded-lg overflow-hidden border border-border mr-3"
-      style={{ width: 150 }}
-    >
-      <View className="w-full h-32 bg-muted justify-center items-center">
-        <Image
-          source={{ uri: item.image || "https://via.placeholder.com/150x150?text=Product" }}
-          className="w-full h-full"
-          resizeMode="cover"
-        />
-      </View>
-      <View className="p-2">
-        <Text className="text-xs font-semibold text-foreground truncate">
-          {item.name}
-        </Text>
-        <Text className="text-primary font-bold text-sm">{item.price} ر.س</Text>
-      </View>
-    </TouchableOpacity>
-  );
-
   if (isLoading) {
     return (
       <ScreenContainer>
-        <Text className="text-center text-muted">جاري التحميل...</Text>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={{ marginTop: 12, color: colors.muted }}>جاري التحميل...</Text>
+        </View>
       </ScreenContainer>
     );
   }
@@ -77,111 +62,128 @@ export default function StoreProfileScreen() {
   if (!store) {
     return (
       <ScreenContainer>
-        <Text className="text-center text-muted">المتجر غير موجود</Text>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
+          <IconSymbol name="xmark" size={48} color={colors.error} />
+          <Text style={{ marginTop: 16, fontSize: 18, fontWeight: "bold", color: colors.foreground }}>المتجر غير موجود</Text>
+          <TouchableOpacity 
+            onPress={() => router.back()}
+            style={{ marginTop: 20, backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 }}
+          >
+            <Text style={{ color: "white", fontWeight: "600" }}>العودة</Text>
+          </TouchableOpacity>
+        </View>
       </ScreenContainer>
     );
   }
 
+  const mappedProducts = products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    image: p.image || "https://via.placeholder.com/200?text=No+Image",
+    storeName: store.name,
+    category: p.category || "عام",
+  }));
+
   return (
-    <ScreenContainer className="p-0">
-      <ScrollView>
+    <ScreenContainer style={{ padding: 0 }}>
+      <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header with back button */}
-        <View className="flex-row items-center justify-between px-4 py-3 border-b border-border">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-xl">←</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+          <TouchableOpacity onPress={() => router.back()} style={{ padding: 4 }}>
+            <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
           </TouchableOpacity>
-          <Text className="text-lg font-semibold text-foreground">ملف المتجر</Text>
-          <View className="w-6" />
+          <Text style={{ fontSize: 18, fontWeight: "bold", color: colors.foreground }}>ملف المتجر</Text>
+          <View style={{ width: 32 }} />
         </View>
 
-        {/* Store Header */}
-        <View className="p-4 gap-4 border-b border-border">
-          {/* Store Name */}
-          <View>
-            <Text className="text-2xl font-bold text-foreground">{store.name}</Text>
-            {store.address && (
-              <Text className="text-sm text-muted mt-1">📍 {store.address}</Text>
-            )}
-          </View>
-
-          {/* Store Info Grid */}
-          <View className="flex-row gap-2">
-            {store.phone && (
-              <View className="flex-1 bg-primary/10 rounded-lg p-3">
-                <Text className="text-xs text-muted mb-1">الهاتف</Text>
-                <Text className="text-sm font-semibold text-foreground">{store.phone}</Text>
-              </View>
-            )}
-            {store.openingHours && (
-              <View className="flex-1 bg-primary/10 rounded-lg p-3">
-                <Text className="text-xs text-muted mb-1">ساعات العمل</Text>
-                <Text className="text-sm font-semibold text-foreground">{store.openingHours}</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Followers Count */}
-          <View className="flex-row items-center gap-4">
-            <View className="flex-1 bg-primary/10 rounded-lg p-3">
-              <Text className="text-xs text-muted mb-1">المتابعون</Text>
-              <Text className="text-lg font-bold text-foreground">{followersCount}</Text>
-            </View>
-            <View className="flex-1">
-              <FollowButton storeId={parseInt(id as string)} size={16} />
-            </View>
-          </View>
-
-          {/* Action Buttons */}
-          <View className="gap-2">
-            <TouchableOpacity
-              onPress={handleContactStore}
-              className="bg-primary px-4 py-3 rounded-lg flex-row items-center justify-center gap-2"
-            >
-              <Text className="text-white">💬</Text>
-              <Text className="text-white font-semibold">تواصل عبر واتساب</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push(`/(tabs)/store/${store.id}/map` as any)}
-              className="bg-surface border border-primary px-4 py-3 rounded-lg flex-row items-center justify-center gap-2"
-            >
-              <Text className="text-primary">🗺️</Text>
-              <Text className="text-primary font-semibold">عرض على الخريطة</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Products Section */}
-        <View className="p-4">
-          <View className="mb-4">
-            <Text className="text-lg font-bold text-foreground">
-              منتجات المتجر ({products.length})
-            </Text>
-          </View>
-
-          {products.length > 0 ? (
-            <FlatList
-              data={products}
-              renderItem={renderProductCard}
-              keyExtractor={(item) => item.id.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              scrollEnabled={false}
-              contentContainerStyle={{ gap: 8 }}
+        {/* Store Profile Section */}
+        <View style={{ padding: 20, alignItems: "center", borderBottomWidth: 1, borderBottomColor: colors.border }}>
+          <View style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: colors.muted, overflow: "hidden", marginBottom: 16, borderWidth: 3, borderColor: colors.primary }}>
+            <Image
+              source={{ uri: store.logo || "https://via.placeholder.com/200?text=Store" }}
+              style={{ width: "100%", height: "100%" }}
+              resizeMode="cover"
             />
-          ) : (
-            <View className="bg-surface rounded-lg p-6 items-center">
-              <Text className="text-muted text-center">لا توجد منتجات متاحة حالياً</Text>
+          </View>
+          <Text style={{ fontSize: 24, fontWeight: "bold", color: colors.foreground, textAlign: "center" }}>{store.name}</Text>
+          {store.address && (
+            <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8, gap: 4 }}>
+              <IconSymbol name="mappin.fill" size={14} color={colors.muted} />
+              <Text style={{ fontSize: 14, color: colors.muted }}>{store.address}</Text>
+            </View>
+          )}
+
+          {/* Followers Stats */}
+          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 20, gap: 24 }}>
+            <View style={{ alignItems: "center" }}>
+              <Text style={{ fontSize: 20, fontWeight: "bold", color: colors.foreground }}>{followersCount}</Text>
+              <Text style={{ fontSize: 12, color: colors.muted }}>متابع</Text>
+            </View>
+            <View style={{ height: 30, width: 1, backgroundColor: colors.border }} />
+            <View style={{ alignItems: "center" }}>
+              <Text style={{ fontSize: 20, fontWeight: "bold", color: colors.foreground }}>{products.length}</Text>
+              <Text style={{ fontSize: 12, color: colors.muted }}>منتج</Text>
+            </View>
+          </View>
+
+          {/* Follow Button */}
+          <View style={{ width: "100%", marginTop: 20 }}>
+            <FollowButton storeId={store.id} size={16} />
+          </View>
+        </View>
+
+        {/* Store Info Grid */}
+        <View style={{ padding: 20, flexDirection: "row", gap: 12 }}>
+          {store.phone && (
+            <View style={{ flex: 1, backgroundColor: `${colors.primary}10`, borderRadius: 12, padding: 16 }}>
+              <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>الهاتف</Text>
+              <Text style={{ fontSize: 14, fontWeight: "bold", color: colors.foreground }}>{store.phone}</Text>
+            </View>
+          )}
+          {store.openingHours && (
+            <View style={{ flex: 1, backgroundColor: `${colors.primary}10`, borderRadius: 12, padding: 16 }}>
+              <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>ساعات العمل</Text>
+              <Text style={{ fontSize: 14, fontWeight: "bold", color: colors.foreground }}>{store.openingHours}</Text>
             </View>
           )}
         </View>
 
         {/* Store Description */}
         {store.description && (
-          <View className="p-4 border-t border-border">
-            <Text className="text-sm font-semibold text-foreground mb-2">عن المتجر</Text>
-            <Text className="text-sm text-muted leading-relaxed">{store.description}</Text>
+          <View style={{ paddingHorizontal: 20, marginBottom: 20 }}>
+            <Text style={{ fontSize: 16, fontWeight: "bold", color: colors.foreground, marginBottom: 8 }}>عن المتجر</Text>
+            <Text style={{ fontSize: 14, color: colors.muted, lineHeight: 22 }}>{store.description}</Text>
           </View>
         )}
+
+        {/* Action Buttons */}
+        <View style={{ paddingHorizontal: 20, gap: 12, marginBottom: 24 }}>
+          <TouchableOpacity
+            onPress={handleContactStore}
+            style={{ backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 12, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }}
+          >
+            <IconSymbol name="phone.fill" size={18} color="white" />
+            <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>تواصل عبر واتساب</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push(`/(tabs)/store/${store.id}/map`)}
+            style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.primary, paddingVertical: 14, borderRadius: 12, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }}
+          >
+            <IconSymbol name="map.fill" size={18} color={colors.primary} />
+            <Text style={{ color: colors.primary, fontSize: 16, fontWeight: "bold" }}>عرض على الخريطة</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Products Section */}
+        <View style={{ paddingBottom: 40 }}>
+          <FeaturedSection
+            title="منتجات المتجر"
+            subtitle={`جميع المنتجات المتاحة في ${store.name}`}
+            products={mappedProducts}
+            isLoading={productsLoading}
+          />
+        </View>
       </ScrollView>
     </ScreenContainer>
   );
