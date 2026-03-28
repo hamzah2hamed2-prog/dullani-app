@@ -39,7 +39,7 @@ export default function HomeScreen() {
 
   const handleAddPress = () => {
     if (!isAuthenticated) {
-      router.push("/search"); // Redirect to login
+      router.push("/login"); // Redirect to login
       return;
     }
     

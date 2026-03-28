@@ -42,10 +42,10 @@ export default function ProfileScreen() {
             قم بتسجيل الدخول للوصول إلى ملفك الشخصي وقائمة الرغبات والمزيد
           </Text>
           <TouchableOpacity
-            onPress={() => router.push("/search")}
+            onPress={() => router.push("/login")}
             style={[styles.loginButton, { backgroundColor: colors.primary }]}
           >
-            <Text style={styles.loginButtonText}>تسجيل الدخول</Text>
+            <Text style={styles.loginButtonText}>تسجيل الدخول / إنشاء حساب</Text>
           </TouchableOpacity>
         </View>
       </ScreenContainer>

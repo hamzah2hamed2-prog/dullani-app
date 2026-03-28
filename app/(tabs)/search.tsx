@@ -5,6 +5,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useAuth } from "@/hooks/use-auth";
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = width / 3;
@@ -12,6 +13,7 @@ const COLUMN_WIDTH = width / 3;
 export default function SearchScreen() {
   const router = useRouter();
   const colors = useColors();
+  const { isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -28,7 +30,7 @@ export default function SearchScreen() {
   // Fetch search history
   const { data: searchHistory = [], refetch: refetchHistory } = trpc.searchHistory.list.useQuery(
     { limit: 5 },
-    { enabled: isSearching }
+    { enabled: isSearching && isAuthenticated }
   );
 
   const addSearchMutation = trpc.searchHistory.add.useMutation({
@@ -41,7 +43,7 @@ export default function SearchScreen() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    if (query.trim()) {
+    if (query.trim() && isAuthenticated) {
       addSearchMutation.mutate({ query: query.trim() });
     }
   };
@@ -120,21 +122,31 @@ export default function SearchScreen() {
 
       {isSearching && searchQuery === "" ? (
         <View style={{ flex: 1, padding: 16 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-            <Text style={{ fontWeight: 'bold', color: colors.foreground }}>عمليات البحث الأخيرة</Text>
-            <TouchableOpacity onPress={() => clearHistoryMutation.mutate()}>
-              <Text style={{ color: colors.primary }}>مسح الكل</Text>
-            </TouchableOpacity>
-          </View>
-          {searchHistory.map((item) => (
-            <TouchableOpacity 
-              key={item.id} 
-              style={{ paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: colors.border }}
-              onPress={() => setSearchQuery(item.query)}
-            >
-              <Text style={{ color: colors.foreground }}>{item.query}</Text>
-            </TouchableOpacity>
-          ))}
+          {isAuthenticated ? (
+            <>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                <Text style={{ fontWeight: 'bold', color: colors.foreground }}>عمليات البحث الأخيرة</Text>
+                <TouchableOpacity onPress={() => clearHistoryMutation.mutate()}>
+                  <Text style={{ color: colors.primary }}>مسح الكل</Text>
+                </TouchableOpacity>
+              </View>
+              {searchHistory.map((item) => (
+                <TouchableOpacity 
+                  key={item.id} 
+                  style={{ paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: colors.border }}
+                  onPress={() => setSearchQuery(item.query)}
+                >
+                  <Text style={{ color: colors.foreground }}>{item.query}</Text>
+                </TouchableOpacity>
+              ))}
+            </>
+          ) : (
+            <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 40 }}>
+              <IconSymbol name="person.circle" size={48} color={colors.muted} />
+              <Text style={{ color: colors.foreground, marginTop: 16, marginBottom: 8, fontWeight: 'bold' }}>سجل البحث غير متاح</Text>
+              <Text style={{ color: colors.muted, textAlign: 'center', marginBottom: 20 }}>قم بتسجيل الدخول لحفظ والوصول إلى سجل بحثك.</Text>
+            </View>
+          )}
           <TouchableOpacity 
             style={{ marginTop: 20 }}
             onPress={() => setIsSearching(false)}
