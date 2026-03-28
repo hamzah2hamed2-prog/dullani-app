@@ -48,7 +48,7 @@ export default function WishlistScreen() {
           showsVerticalScrollIndicator={false}
         />
       ) : (
-        <View style={{ flex: 1, itemsCenter: "center", justifyContent: "center", padding: 40 }}>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 40 }}>
           <Text style={{ fontSize: 40, textAlign: 'center', marginBottom: 20 }}>🔖</Text>
           <Text style={{ color: colors.foreground, fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 10 }}>لا توجد محفوظات</Text>
           <Text style={{ color: colors.muted, textAlign: 'center' }}>
