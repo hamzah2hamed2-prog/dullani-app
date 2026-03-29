@@ -1,6 +1,19 @@
-import { FlatList, Text, View, TouchableOpacity, TextInput, ActivityIndicator, Image, Dimensions, ScrollView } from "react-native";
 import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  Image,
+  Dimensions,
+  StyleSheet,
+  ActivityIndicator,
+  ScrollView,
+  Pressable,
+} from "react-native";
+
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
@@ -17,6 +30,15 @@ export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [showSearchHistory, setShowSearchHistory] = useState(false);
+  const [savedSearches, setSavedSearches] = useState<string[]>([]);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    priceMin: 0,
+    priceMax: 10000,
+    rating: 0,
+    sortBy: "newest",
+  });
 
   // Fetch all products
   const { data: products = [], isLoading: productsLoading } = trpc.products.list.useQuery({
@@ -29,7 +51,7 @@ export default function SearchScreen() {
 
   // Fetch search history
   const { data: searchHistory = [], refetch: refetchHistory } = trpc.searchHistory.list.useQuery(
-    { limit: 5 },
+    { limit: 10 },
     { enabled: isSearching && isAuthenticated }
   );
 
@@ -43,9 +65,20 @@ export default function SearchScreen() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setShowSearchHistory(query.length === 0);
     if (query.trim() && isAuthenticated) {
       addSearchMutation.mutate({ query: query.trim() });
     }
+  };
+
+  const handleSaveSearch = () => {
+    if (searchQuery.trim() && !savedSearches.includes(searchQuery)) {
+      setSavedSearches([...savedSearches, searchQuery]);
+    }
+  };
+
+  const handleRemoveSavedSearch = (search: string) => {
+    setSavedSearches(savedSearches.filter((s) => s !== search));
   };
 
   // Filter products based on search and category
@@ -58,144 +91,256 @@ export default function SearchScreen() {
     const matchesCategory =
       selectedCategory === null || product.category === selectedCategory;
 
-    return matchesSearch && matchesCategory;
+    const matchesPrice =
+      (product.price || 0) >= advancedFilters.priceMin &&
+      (product.price || 0) <= advancedFilters.priceMax;
+
+    return matchesSearch && matchesCategory && matchesPrice;
   });
 
   const renderProductItem = ({ item }: { item: any }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={{ width: COLUMN_WIDTH, height: COLUMN_WIDTH, padding: 1 }}
       onPress={() => router.push(`/(tabs)/product/${item.id}`)}
     >
-      <Image 
-        source={{ uri: item.image || "https://via.placeholder.com/200" }} 
-        style={{ width: '100%', height: '100%' }}
+      <Image
+        source={{ uri: item.image || "https://via.placeholder.com/200" }}
+        style={{ width: "100%", height: "100%" }}
         resizeMode="cover"
       />
     </TouchableOpacity>
   );
 
+  const renderSearchHistory = () => (
+    <View style={[styles.historyContainer, { backgroundColor: colors.background }]}>
+      <View style={styles.historyHeader}>
+        <Text style={[styles.historyTitle, { color: colors.foreground }]}>سجل البحث</Text>
+        {searchHistory.length > 0 && (
+          <TouchableOpacity onPress={() => clearHistoryMutation.mutate()}>
+            <Text style={[styles.clearButton, { color: colors.primary }]}>مسح الكل</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      {searchHistory.length > 0 ? (
+        <View style={styles.historyList}>
+          {searchHistory.map((item: any, index: number) => (
+            <TouchableOpacity
+              key={index}
+              style={[styles.historyItem, { borderBottomColor: colors.border }]}
+              onPress={() => handleSearch(item.query)}
+            >
+              <IconSymbol name="clock" size={16} color={colors.muted} />
+              <Text style={[styles.historyItemText, { color: colors.foreground }]}>
+                {item.query}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : (
+        <Text style={[styles.emptyText, { color: colors.muted }]}>لا يوجد سجل بحث</Text>
+      )}
+    </View>
+  );
+
+  const renderSavedSearches = () => (
+    <View style={[styles.savedSearchesContainer, { backgroundColor: colors.surface }]}>
+      <Text style={[styles.savedSearchesTitle, { color: colors.foreground }]}>البحث المفضل</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.savedSearchesList}>
+        {savedSearches.map((search, index) => (
+          <Pressable
+            key={index}
+            style={[styles.savedSearchChip, { backgroundColor: colors.primary }]}
+            onPress={() => handleSearch(search)}
+          >
+            <Text style={[styles.savedSearchText, { color: colors.background }]}>{search}</Text>
+            <TouchableOpacity onPress={() => handleRemoveSavedSearch(search)}>
+              <Text style={[styles.removeChip, { color: colors.background }]}>✕</Text>
+            </TouchableOpacity>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
+  );
+
+  const renderAdvancedFilters = () => (
+    <View style={[styles.filtersPanel, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+      <Text style={[styles.filterTitle, { color: colors.foreground }]}>الفلاتر المتقدمة</Text>
+
+      {/* Price Filter */}
+      <View style={styles.filterGroup}>
+        <Text style={[styles.filterLabel, { color: colors.foreground }]}>السعر</Text>
+        <View style={styles.priceRange}>
+          <Text style={[styles.priceText, { color: colors.muted }]}>
+            {advancedFilters.priceMin} - {advancedFilters.priceMax} ريال
+          </Text>
+        </View>
+      </View>
+
+      {/* Sort Options */}
+      <View style={styles.filterGroup}>
+        <Text style={[styles.filterLabel, { color: colors.foreground }]}>الترتيب</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sortOptions}>
+          {["newest", "oldest", "price-low", "price-high", "popular"].map((option) => (
+            <Pressable
+              key={option}
+              style={[
+                styles.sortOption,
+                {
+                  backgroundColor:
+                    advancedFilters.sortBy === option ? colors.primary : colors.background,
+                  borderColor: colors.border,
+                },
+              ]}
+              onPress={() => setAdvancedFilters({ ...advancedFilters, sortBy: option })}
+            >
+              <Text
+                style={[
+                  styles.sortOptionText,
+                  {
+                    color:
+                      advancedFilters.sortBy === option ? colors.background : colors.foreground,
+                  },
+                ]}
+              >
+                {option === "newest" && "الأحدث"}
+                {option === "oldest" && "الأقدم"}
+                {option === "price-low" && "السعر: منخفض"}
+                {option === "price-high" && "السعر: مرتفع"}
+                {option === "popular" && "الأكثر شهرة"}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+    </View>
+  );
+
   return (
     <ScreenContainer edges={["top"]} style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Search Input Bar */}
-      <View style={{ paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ 
-          backgroundColor: colors.surface, 
-          borderRadius: 10, 
-          paddingHorizontal: 12, 
-          paddingVertical: 8, 
-          flexDirection: "row", 
-          alignItems: "center",
-          flex: 1
-        }}>
-          <IconSymbol name="magnifyingglass" size={16} color={colors.muted} />
+      <View
+        style={[
+          styles.searchBar,
+          { backgroundColor: colors.background, borderBottomColor: colors.border },
+        ]}
+      >
+        <View
+          style={[
+            styles.searchInputContainer,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          <IconSymbol name="magnifyingglass" size={18} color={colors.muted} />
           <TextInput
-            placeholder="البحث"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onFocus={() => setIsSearching(true)}
-            onSubmitEditing={() => handleSearch(searchQuery)}
-            style={{ 
-              marginLeft: 8, 
-              flex: 1, 
-              color: colors.foreground, 
-              textAlign: "right", 
-              fontSize: 16,
-              paddingVertical: 0
-            }}
+            style={[styles.searchInput, { color: colors.foreground }]}
+            placeholder="ابحث عن منتجات..."
             placeholderTextColor={colors.muted}
+            value={searchQuery}
+            onChangeText={handleSearch}
+            onFocus={() => setShowSearchHistory(true)}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery("")}>
-              <IconSymbol name="xmark" size={14} color={colors.muted} />
+            <TouchableOpacity onPress={() => handleSearch("")}>
+              <IconSymbol name="xmark.circle.fill" size={18} color={colors.muted} />
             </TouchableOpacity>
           )}
         </View>
-        
-        {/* Quick Action Buttons */}
-        <TouchableOpacity onPress={() => router.push("/(tabs)/image-search")}>
-          <IconSymbol name="camera.fill" size={24} color={colors.foreground} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/(tabs)/stores-map")}>
-          <IconSymbol name="map.fill" size={24} color={colors.foreground} />
+        <TouchableOpacity
+          style={[styles.filterIconButton, { backgroundColor: colors.surface }]}
+          onPress={() => setShowAdvancedFilters(!showAdvancedFilters)}
+        >
+          <IconSymbol name="slider.horizontal.3" size={20} color={colors.foreground} />
         </TouchableOpacity>
       </View>
 
-      {isSearching && searchQuery === "" ? (
-        <View style={{ flex: 1, padding: 16 }}>
-          {isAuthenticated ? (
-            <>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Text style={{ fontWeight: 'bold', color: colors.foreground }}>عمليات البحث الأخيرة</Text>
-                <TouchableOpacity onPress={() => clearHistoryMutation.mutate()}>
-                  <Text style={{ color: colors.primary }}>مسح الكل</Text>
-                </TouchableOpacity>
-              </View>
-              {searchHistory.map((item) => (
-                <TouchableOpacity 
-                  key={item.id} 
-                  style={{ paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: colors.border }}
-                  onPress={() => setSearchQuery(item.query)}
-                >
-                  <Text style={{ color: colors.foreground }}>{item.query}</Text>
-                </TouchableOpacity>
-              ))}
-            </>
-          ) : (
-            <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 40 }}>
-              <IconSymbol name="person.circle" size={48} color={colors.muted} />
-              <Text style={{ color: colors.foreground, marginTop: 16, marginBottom: 8, fontWeight: 'bold' }}>سجل البحث غير متاح</Text>
-              <Text style={{ color: colors.muted, textAlign: 'center', marginBottom: 20 }}>قم بتسجيل الدخول لحفظ والوصول إلى سجل بحثك.</Text>
-            </View>
-          )}
-          <TouchableOpacity 
-            style={{ marginTop: 20 }}
-            onPress={() => setIsSearching(false)}
-          >
-            <Text style={{ color: colors.muted, textAlign: 'center' }}>إغلاق</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Advanced Filters */}
+      {showAdvancedFilters && renderAdvancedFilters()}
+
+      {/* Saved Searches */}
+      {savedSearches.length > 0 && searchQuery.length === 0 && renderSavedSearches()}
+
+      {/* Search History or Results */}
+      {showSearchHistory && searchQuery.length === 0 ? (
+        renderSearchHistory()
       ) : (
         <>
-          {/* Quick Filter Categories */}
-          <View style={{ paddingBottom: 10 }}>
-            {categoriesLoading ? (
-              <ActivityIndicator color={colors.primary} size="small" />
-            ) : (
-              <FlatList
-                data={[{ id: 0, name: "الكل" }, ...categories]}
-                renderItem={({ item }) => {
-                  const isSelected = item.name === "الكل" ? !selectedCategory : selectedCategory === item.name;
-                  return (
-                    <TouchableOpacity
-                      onPress={() => setSelectedCategory(item.name === "الكل" ? null : item.name)}
-                      style={{
-                        marginLeft: 8,
-                        paddingHorizontal: 16,
-                        paddingVertical: 6,
-                        borderRadius: 8,
-                        backgroundColor: isSelected ? colors.surface : colors.background,
-                        borderWidth: 1,
-                        borderColor: colors.border
-                      }}
-                    >
-                      <Text style={{ fontSize: 13, fontWeight: "600", color: isSelected ? colors.primary : colors.foreground }}>
-                        {item.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                }}
-                keyExtractor={(item) => item.id.toString()}
-                horizontal
-                inverted
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 10 }}
-              />
-            )}
-          </View>
+          {/* Categories Filter */}
+          {!categoriesLoading && categories.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={[styles.categoriesScroll, { borderBottomColor: colors.border }]}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.categoryChip,
+                  {
+                    backgroundColor: selectedCategory === null ? colors.primary : colors.surface,
+                    borderColor: colors.border,
+                  },
+                ]}
+                onPress={() => setSelectedCategory(null)}
+              >
+                <Text
+                  style={[
+                    styles.categoryText,
+                    {
+                      color:
+                        selectedCategory === null ? colors.background : colors.foreground,
+                    },
+                  ]}
+                >
+                  الكل
+                </Text>
+              </TouchableOpacity>
+              {categories.map((cat: any) => (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[
+                    styles.categoryChip,
+                    {
+                      backgroundColor:
+                        selectedCategory === cat.name ? colors.primary : colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  onPress={() => setSelectedCategory(cat.name)}
+                >
+                  <Text
+                    style={[
+                      styles.categoryText,
+                      {
+                        color:
+                          selectedCategory === cat.name ? colors.background : colors.foreground,
+                      },
+                    ]}
+                  >
+                    {cat.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
 
-          {/* Explore Grid */}
+          {/* Results Header */}
+          {searchQuery.length > 0 && (
+            <View style={[styles.resultsHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.resultsCount, { color: colors.muted }]}>
+                {filteredProducts.length} نتيجة
+              </Text>
+              {filteredProducts.length > 0 && (
+                <TouchableOpacity onPress={handleSaveSearch}>
+                  <Text style={[styles.saveSearchButton, { color: colors.primary }]}>
+                    💾 حفظ البحث
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          {/* Products Grid */}
           {productsLoading ? (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : filteredProducts.length > 0 ? (
@@ -204,11 +349,14 @@ export default function SearchScreen() {
               renderItem={renderProductItem}
               keyExtractor={(item) => item.id.toString()}
               numColumns={3}
-              showsVerticalScrollIndicator={false}
+              columnWrapperStyle={{ justifyContent: "space-between" }}
+              scrollEnabled={false}
             />
           ) : (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ color: colors.muted }}>لا توجد نتائج</Text>
+            <View style={styles.emptyContainer}>
+              <Text style={[styles.emptyText, { color: colors.muted }]}>
+                لم يتم العثور على نتائج
+              </Text>
             </View>
           )}
         </>
@@ -216,3 +364,183 @@ export default function SearchScreen() {
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 0.5,
+  },
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 0.5,
+    height: 40,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+  },
+  filterIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  categoriesScroll: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 0.5,
+  },
+  categoryChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    borderWidth: 0.5,
+  },
+  categoryText: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  historyContainer: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  historyHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  historyTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  clearButton: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  historyList: {
+    gap: 0,
+  },
+  historyItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+  },
+  historyItemText: {
+    fontSize: 14,
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 20,
+  },
+  savedSearchesContainer: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+  savedSearchesTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  savedSearchesList: {
+    marginHorizontal: -12,
+    paddingHorizontal: 12,
+  },
+  savedSearchChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  savedSearchText: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  removeChip: {
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  filtersPanel: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+  },
+  filterTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  filterGroup: {
+    marginBottom: 12,
+  },
+  filterLabel: {
+    fontSize: 13,
+    fontWeight: "500",
+    marginBottom: 6,
+  },
+  priceRange: {
+    paddingVertical: 6,
+  },
+  priceText: {
+    fontSize: 12,
+  },
+  sortOptions: {
+    marginHorizontal: -12,
+    paddingHorizontal: 12,
+  },
+  sortOption: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginRight: 8,
+    borderWidth: 0.5,
+  },
+  sortOptionText: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  resultsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 0.5,
+  },
+  resultsCount: {
+    fontSize: 13,
+  },
+  saveSearchButton: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
