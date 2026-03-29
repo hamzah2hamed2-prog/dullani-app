@@ -72,6 +72,154 @@ export default function ProductDetailScreen() {
     }
   };
 
+  const styles = StyleSheet.create({
+    centered: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      borderBottomWidth: 0.5,
+    },
+    headerTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    headerButton: {
+      padding: 4,
+    },
+    storeHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      gap: 12,
+    },
+    avatarContainer: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      borderWidth: 1.5,
+      padding: 2,
+    },
+    avatar: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 18,
+    },
+    storeName: {
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+    storeLocation: {
+      fontSize: 12,
+    },
+    imageContainer: {
+      width: width,
+      height: width,
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+    },
+    actionBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+    },
+    actionLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 20,
+    },
+    actionItem: {
+      padding: 2,
+    },
+    priceTag: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+    },
+    priceText: {
+      color: 'white',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    content: {
+      paddingHorizontal: 16,
+    },
+    productName: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      marginBottom: 16,
+    },
+    divider: {
+      height: 0.5,
+      backgroundColor: 'rgba(0,0,0,0.1)',
+      marginVertical: 16,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      marginBottom: 8,
+    },
+    description: {
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 8,
+    },
+    infoText: {
+      fontSize: 14,
+    },
+    stockDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+    contactSection: {
+      padding: 16,
+      gap: 12,
+      marginTop: 20,
+    },
+    contactButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 14,
+      borderRadius: 12,
+      gap: 10,
+    },
+    contactButtonText: {
+      color: 'white', 
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    mapButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 14,
+      borderRadius: 12,
+      gap: 10,
+    },
+    mapButtonText: {
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+  });
+
   if (isLoading) {
     return (
       <ScreenContainer>
@@ -212,152 +360,4 @@ export default function ProductDetailScreen() {
       </ScrollView>
     </ScreenContainer>
   );
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  headerButton: {
-    padding: 4,
-  },
-  storeHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
-  },
-  avatarContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    padding: 2,
-  },
-  avatar: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 18,
-  },
-  storeName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  storeLocation: {
-    fontSize: 12,
-  },
-  imageContainer: {
-    width: width,
-    height: width,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  actionBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  actionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 20,
-  },
-  actionItem: {
-    padding: 2,
-  },
-  priceTag: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  priceText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  content: {
-    paddingHorizontal: 16,
-  },
-  productName: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  divider: {
-    height: 0.5,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    marginVertical: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  description: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  infoText: {
-    fontSize: 14,
-  },
-  stockDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  contactSection: {
-    padding: 16,
-    gap: 12,
-    marginTop: 20,
-  },
-  contactButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 10,
-  },
-  contactButtonText: {
-    color: 'white', 
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  mapButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 10,
-  },
-  mapButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});
 }
