@@ -376,6 +376,41 @@ export const appRouter = router({
       .query(({ input }) => db.getProductCommentsCount(input.productId)),
   }),
 
+  // Messaging API
+  messages: router({
+    send: protectedProcedure
+      .input(
+        z.object({
+          recipientId: z.number(),
+          content: z.string().min(1).max(1000),
+          productId: z.number().optional(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        db.sendMessage(ctx.user.id, input.recipientId, input.content, input.productId)
+      ),
+    getConversation: protectedProcedure
+      .input(
+        z.object({
+          userId: z.number(),
+          limit: z.number().default(50),
+          offset: z.number().default(0),
+        })
+      )
+      .query(({ ctx, input }) =>
+        db.getConversation(ctx.user.id, input.userId, input.limit, input.offset)
+      ),
+    getConversations: protectedProcedure.query(({ ctx }) =>
+      db.getUserConversations(ctx.user.id)
+    ),
+    markAsRead: protectedProcedure
+      .input(z.object({ messageId: z.number() }))
+      .mutation(({ input }) => db.markMessageAsRead(input.messageId)),
+    getUnreadCount: protectedProcedure.query(({ ctx }) =>
+      db.getUnreadMessageCount(ctx.user.id)
+    ),
+  }),
+
   // Social Features API
   social: router({
     // Follows

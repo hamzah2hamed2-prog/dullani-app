@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, messages } from "../drizzle/schema";
 import { ENV } from "./_core/env";
+import { eq, or, and, desc, count } from "drizzle-orm";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -824,4 +824,110 @@ export async function getFollowingFeedProducts(userId: number, limit = 20, offse
     .offset(offset);
   
   return result;
+}
+
+// ============= MESSAGING FUNCTIONS =============
+
+export async function sendMessage(
+  senderId: number,
+  recipientId: number,
+  content: string,
+  productId?: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    const result = await db.insert(messages).values({
+      senderId,
+      recipientId,
+      content,
+      productId,
+      read: 0,
+    });
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to send message:", error);
+    throw error;
+  }
+}
+
+export async function getConversation(userId1: number, userId2: number, limit = 50, offset = 0) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    const result = await db
+      .select()
+      .from(messages)
+      .where(
+        or(
+          and(eq(messages.senderId, userId1), eq(messages.recipientId, userId2)),
+          and(eq(messages.senderId, userId2), eq(messages.recipientId, userId1))
+        )
+      )
+      .orderBy(desc(messages.createdAt))
+      .limit(limit)
+      .offset(offset);
+    return result.reverse();
+  } catch (error) {
+    console.error("[Database] Failed to get conversation:", error);
+    throw error;
+  }
+}
+
+export async function getUserConversations(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    const result = await db
+      .selectDistinct({
+        id: messages.id,
+        senderId: messages.senderId,
+        recipientId: messages.recipientId,
+        content: messages.content,
+        createdAt: messages.createdAt,
+        read: messages.read,
+      })
+      .from(messages)
+      .where(or(eq(messages.senderId, userId), eq(messages.recipientId, userId)))
+      .orderBy(desc(messages.createdAt));
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get conversations:", error);
+    throw error;
+  }
+}
+
+export async function markMessageAsRead(messageId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    const result = await db
+      .update(messages)
+      .set({ read: 1 })
+      .where(eq(messages.id, messageId));
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to mark message as read:", error);
+    throw error;
+  }
+}
+
+export async function getUnreadMessageCount(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    const result = await db
+      .select({ count: count() })
+      .from(messages)
+      .where(and(eq(messages.recipientId, userId), eq(messages.read, 0)));
+    return result[0]?.count || 0;
+  } catch (error) {
+    console.error("[Database] Failed to get unread message count:", error);
+    throw error;
+  }
 }

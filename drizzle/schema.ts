@@ -144,6 +144,17 @@ export const comments = mysqlTable("comments", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+// Messages table - for direct messaging between users and stores
+export const messages = mysqlTable("messages", {
+  id: int("id").autoincrement().primaryKey(),
+  senderId: int("senderId").notNull(),
+  recipientId: int("recipientId").notNull(),
+  content: text("content").notNull(),
+  productId: int("productId"), // Optional: reference to product being discussed
+  read: int("read").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 // Export types
 export type Store = typeof stores.$inferSelect;
 export type InsertStore = typeof stores.$inferInsert;
@@ -177,3 +188,6 @@ export type InsertLike = typeof likes.$inferInsert;
 
 export type Comment = typeof comments.$inferSelect;
 export type InsertComment = typeof comments.$inferInsert;
+
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = typeof messages.$inferInsert;
