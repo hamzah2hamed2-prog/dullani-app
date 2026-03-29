@@ -1,6 +1,6 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { ScrollView, Text, View, TouchableOpacity, Image, Linking, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, Image, Linking, StyleSheet, ActivityIndicator, Dimensions, Share, Pressable, FlatList } from "react-native";
 import { useState, useEffect } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
@@ -14,6 +14,9 @@ export default function ProductDetailScreen() {
   const router = useRouter();
   const colors = useColors();
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [showReportOptions, setShowReportOptions] = useState(false);
+  const [showSimilarProducts, setShowSimilarProducts] = useState(true);
 
   // Fetch product data
   const { data: product, isLoading } = trpc.products.getById.useQuery(
@@ -21,10 +24,26 @@ export default function ProductDetailScreen() {
     { enabled: !!id }
   );
 
-  // Fetch store data if product exists
+  // Fetch store data
   const { data: store } = trpc.stores.getById.useQuery(
     { id: product?.storeId || 0 },
     { enabled: !!product?.storeId }
+  );
+
+  // Fetch comments
+  const { data: comments = [] } = trpc.comments.list.useQuery(
+    { productId: parseInt(id as string), limit: 5 },
+    { enabled: !!id }
+  );
+
+  // Fetch similar products
+  const { data: allProducts = [] } = trpc.products.list.useQuery({
+    limit: 10,
+    offset: 0,
+  });
+
+  const similarProducts = allProducts.filter(
+    (p: any) => p.category === product?.category && p.id !== product?.id
   );
 
   // Check if in wishlist
@@ -72,158 +91,32 @@ export default function ProductDetailScreen() {
     }
   };
 
-  const styles = StyleSheet.create({
-    centered: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 12,
-      paddingVertical: 12,
-      borderBottomWidth: 0.5,
-    },
-    headerTitle: {
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-    headerButton: {
-      padding: 4,
-    },
-    storeHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      gap: 12,
-    },
-    avatarContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      borderWidth: 1.5,
-      padding: 2,
-    },
-    avatar: {
-      width: '100%',
-      height: '100%',
-      borderRadius: 18,
-    },
-    storeName: {
-      fontSize: 14,
-      fontWeight: 'bold',
-    },
-    storeLocation: {
-      fontSize: 12,
-    },
-    imageContainer: {
-      width: width,
-      height: width,
-    },
-    image: {
-      width: '100%',
-      height: '100%',
-    },
-    actionBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 16,
-    },
-    actionLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 20,
-    },
-    actionItem: {
-      padding: 2,
-    },
-    priceTag: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
-    },
-    priceText: {
-      color: 'white',
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-    content: {
-      paddingHorizontal: 16,
-    },
-    productName: {
-      fontSize: 22,
-      fontWeight: 'bold',
-      marginBottom: 16,
-    },
-    divider: {
-      height: 0.5,
-      backgroundColor: 'rgba(0,0,0,0.1)',
-      marginVertical: 16,
-    },
-    sectionTitle: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      marginBottom: 8,
-    },
-    description: {
-      fontSize: 15,
-      lineHeight: 22,
-    },
-    infoRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      marginBottom: 8,
-    },
-    infoText: {
-      fontSize: 14,
-    },
-    stockDot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-    },
-    contactSection: {
-      padding: 16,
-      gap: 12,
-      marginTop: 20,
-    },
-    contactButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 14,
-      borderRadius: 12,
-      gap: 10,
-    },
-    contactButtonText: {
-      color: 'white', 
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-    mapButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 14,
-      borderRadius: 12,
-      gap: 10,
-    },
-    mapButtonText: {
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-  });
+  const handleDirectMessage = () => {
+    if (store?.id) {
+      router.push(`/(tabs)/messages/new?storeId=${store.id}`);
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `تحقق من هذا المنتج: ${product?.name}\n${product?.description}\nالسعر: ${product?.price} ريال\nعلى تطبيق دلني 🛍️`,
+        title: product?.name,
+      });
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
+  };
+
+  const handleReport = (reason: string) => {
+    alert(`تم إرسال البلاغ: ${reason}`);
+    setShowReportOptions(false);
+  };
 
   if (isLoading) {
     return (
       <ScreenContainer>
-        <View style={styles.centered}>
+        <View style={[styles.centered, { backgroundColor: colors.background }]}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </ScreenContainer>
@@ -233,131 +126,382 @@ export default function ProductDetailScreen() {
   if (!product) {
     return (
       <ScreenContainer>
-        <View style={styles.centered}>
-          <Text style={{ color: colors.muted }}>المنتج غير موجود</Text>
-          <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
-            <Text style={{ color: colors.primary }}>العودة</Text>
-          </TouchableOpacity>
+        <View style={[styles.centered, { backgroundColor: colors.background }]}>
+          <Text style={{ color: colors.foreground }}>المنتج غير موجود</Text>
         </View>
       </ScreenContainer>
     );
   }
 
   return (
-    <ScreenContainer edges={["top"]} style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+    <ScreenContainer edges={["top"]}>
+      <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
         {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+        <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={() => router.back()}>
             <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>تفاصيل المنتج</Text>
-          <TouchableOpacity onPress={handleWishlistToggle} style={styles.headerButton}>
-            <IconSymbol 
-              name={isInWishlist ? "bookmark.fill" : "bookmark"} 
-              size={24} 
-              color={isInWishlist ? colors.primary : colors.foreground} 
-            />
+          <TouchableOpacity onPress={() => setShowReportOptions(!showReportOptions)}>
+            <IconSymbol name="ellipsis" size={24} color={colors.foreground} />
           </TouchableOpacity>
         </View>
 
-        {/* Store Info Header (Instagram style) */}
-        {store && (
-          <TouchableOpacity 
-            style={styles.storeHeader}
-            onPress={() => router.push(`/(tabs)/store/${store.id}`)}
-          >
-            <View style={[styles.avatarContainer, { borderColor: colors.primary }]}>
-              <Image
-                source={{ uri: store.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(store.name)}&background=random` }}
-                style={styles.avatar}
-              />
-            </View>
-            <View>
-              <Text style={[styles.storeName, { color: colors.foreground }]}>{store.name}</Text>
-              <Text style={[styles.storeLocation, { color: colors.muted }]}>{store.address || "متجر محلي"}</Text>
-            </View>
-          </TouchableOpacity>
+        {/* Report Options */}
+        {showReportOptions && (
+          <View style={[styles.reportPanel, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <TouchableOpacity onPress={() => handleReport("محتوى غير مناسب")}>
+              <Text style={[styles.reportOption, { color: colors.foreground }]}>محتوى غير مناسب</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleReport("منتج مزيف")}>
+              <Text style={[styles.reportOption, { color: colors.foreground }]}>منتج مزيف</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleReport("سعر خاطئ")}>
+              <Text style={[styles.reportOption, { color: colors.foreground }]}>سعر خاطئ</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleReport("محتوى مسيء")}>
+              <Text style={[styles.reportOption, { color: colors.foreground }]}>محتوى مسيء</Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         {/* Product Image */}
-        <View style={[styles.imageContainer, { backgroundColor: colors.muted }]}>
-          <Image
-            source={{ uri: product.image || "https://via.placeholder.com/600" }}
-            style={styles.image}
-            resizeMode="cover"
-          />
-        </View>
+        <Image
+          source={{ uri: product.image || "https://via.placeholder.com/400" }}
+          style={{ width, height: 300 }}
+          resizeMode="cover"
+        />
 
-        {/* Action Bar */}
-        <View style={styles.actionBar}>
-          <View style={styles.actionLeft}>
-            <LikeButton productId={product.id} size={28} showCount={false} />
-            <TouchableOpacity 
-              style={styles.actionItem}
-              onPress={() => router.push(`/(tabs)/product/${product.id}/comments`)}
+        {/* Store Header */}
+        {store && (
+          <View style={[styles.storeHeader, { borderBottomColor: colors.border }]}>
+            <View style={styles.storeInfo}>
+              <Text style={[styles.storeName, { color: colors.foreground }]}>{store.name}</Text>
+              <Text style={[styles.storeRating, { color: colors.muted }]}>⭐ 4.5 (120 تقييم)</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.followButton, { backgroundColor: colors.primary }]}
+              onPress={() => alert("تمت المتابعة")}
             >
-              <IconSymbol name="bubble.right" size={26} color={colors.foreground} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionItem}>
-              <IconSymbol name="paperplane" size={26} color={colors.foreground} />
+              <Text style={{ color: colors.background, fontWeight: "600" }}>متابعة</Text>
             </TouchableOpacity>
           </View>
-          <View style={[styles.priceTag, { backgroundColor: colors.primary }]}>
-            <Text style={styles.priceText}>{product.price} ر.س</Text>
-          </View>
-        </View>
+        )}
 
-        {/* Content */}
-        <View style={styles.content}>
+        {/* Product Info */}
+        <View style={[styles.infoSection, { borderBottomColor: colors.border }]}>
           <Text style={[styles.productName, { color: colors.foreground }]}>{product.name}</Text>
-          
-          <View style={styles.divider} />
-          
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>الوصف</Text>
-          <Text style={[styles.description, { color: colors.foreground }]}>
-            {product.description || "لا يوجد وصف متوفر لهذا المنتج حالياً."}
-          </Text>
-
-          <View style={styles.divider} />
-
-          {/* Additional Info */}
-          <View style={styles.infoRow}>
-            <IconSymbol name="tag.fill" size={16} color={colors.muted} />
-            <Text style={[styles.infoText, { color: colors.muted }]}>الفئة: {product.category || "عام"}</Text>
-          </View>
-          
-          <View style={styles.infoRow}>
-            <View style={[styles.stockDot, { backgroundColor: product.inStock ? colors.success : colors.error }]} />
-            <Text style={[styles.infoText, { color: colors.muted }]}>
-              {product.inStock ? "متوفر حالياً" : "غير متوفر في المخزون"}
-            </Text>
-          </View>
+          <Text style={[styles.productPrice, { color: colors.primary }]}>{product.price} ريال</Text>
+          <Text style={[styles.productDescription, { color: colors.muted }]}>{product.description}</Text>
         </View>
 
-        {/* Contact Store Section */}
-        <View style={styles.contactSection}>
+        {/* Action Buttons */}
+        <View style={[styles.actionButtons, { borderBottomColor: colors.border }]}>
           <TouchableOpacity
-            onPress={handleContactStore}
-            style={[styles.contactButton, { backgroundColor: colors.primary }]}
+            style={[styles.actionButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={handleWishlistToggle}
           >
-            <IconSymbol name="phone.fill" size={20} color="white" />
-            <Text style={styles.contactButtonText}>تواصل عبر واتساب</Text>
+            <IconSymbol name={isInWishlist ? "heart.fill" : "heart"} size={20} color={colors.primary} />
+            <Text style={[styles.actionButtonText, { color: colors.foreground }]}>
+              {isInWishlist ? "محفوظ" : "حفظ"}
+            </Text>
           </TouchableOpacity>
-          
-          {store?.address && (
-            <TouchableOpacity 
-              onPress={() => router.push(`/(tabs)/store/${store.id}/map`)}
-              style={[styles.mapButton, { borderColor: colors.primary, borderWidth: 1 }]}
-            >
-              <IconSymbol name="map.fill" size={20} color={colors.primary} />
-              <Text style={[styles.mapButtonText, { color: colors.primary }]}>موقع المتجر على الخريطة</Text>
+
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={handleShare}
+          >
+            <IconSymbol name="square.and.arrow.up" size={20} color={colors.primary} />
+            <Text style={[styles.actionButtonText, { color: colors.foreground }]}>مشاركة</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={handleDirectMessage}
+          >
+            <IconSymbol name="paperplane" size={20} color={colors.primary} />
+            <Text style={[styles.actionButtonText, { color: colors.foreground }]}>رسالة</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Contact Store Button */}
+        <TouchableOpacity
+          style={[styles.contactButton, { backgroundColor: colors.primary }]}
+          onPress={handleContactStore}
+        >
+          <IconSymbol name="phone.fill" size={18} color={colors.background} />
+          <Text style={[styles.contactButtonText, { color: colors.background }]}>تواصل عبر واتساب</Text>
+        </TouchableOpacity>
+
+        {/* Comments Section */}
+        <View style={[styles.commentsSection, { borderTopColor: colors.border }]}>
+          <View style={styles.commentsHeader}>
+            <Text style={[styles.commentsTitle, { color: colors.foreground }]}>التعليقات ({comments.length})</Text>
+            <TouchableOpacity onPress={() => setShowComments(!showComments)}>
+              <IconSymbol
+                name={showComments ? "chevron.up" : "chevron.down"}
+                size={20}
+                color={colors.foreground}
+              />
             </TouchableOpacity>
+          </View>
+
+          {showComments && (
+            <View>
+              {comments.length > 0 ? (
+                comments.map((comment: any) => (
+                  <View key={comment.id} style={[styles.commentItem, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.commentAuthor, { color: colors.foreground }]}>
+                      {comment.userName}
+                    </Text>
+                    <Text style={[styles.commentText, { color: colors.muted }]}>{comment.text}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={[styles.noComments, { color: colors.muted }]}>لا توجد تعليقات حتى الآن</Text>
+              )}
+
+              <TouchableOpacity
+                style={[styles.addCommentButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                onPress={() => router.push(`/(tabs)/product/${id}/comments`)}
+              >
+                <Text style={[styles.addCommentText, { color: colors.primary }]}>أضف تعليقك</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
-        
-        <View style={{ height: 40 }} />
+
+        {/* Similar Products */}
+        {similarProducts.length > 0 && (
+          <View style={[styles.similarSection, { borderTopColor: colors.border }]}>
+            <View style={styles.similarHeader}>
+              <Text style={[styles.similarTitle, { color: colors.foreground }]}>منتجات مشابهة</Text>
+              <TouchableOpacity onPress={() => setShowSimilarProducts(!showSimilarProducts)}>
+                <IconSymbol
+                  name={showSimilarProducts ? "chevron.up" : "chevron.down"}
+                  size={20}
+                  color={colors.foreground}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {showSimilarProducts && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.similarList}>
+                {similarProducts.slice(0, 5).map((item: any) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[styles.similarItem, { backgroundColor: colors.surface }]}
+                    onPress={() => router.push(`/(tabs)/product/${item.id}`)}
+                  >
+                    <Image
+                      source={{ uri: item.image || "https://via.placeholder.com/100" }}
+                      style={styles.similarImage}
+                      resizeMode="cover"
+                    />
+                    <Text style={[styles.similarName, { color: colors.foreground }]} numberOfLines={2}>
+                      {item.name}
+                    </Text>
+                    <Text style={[styles.similarPrice, { color: colors.primary }]}>{item.price} ريال</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        )}
+
+        <View style={{ height: 20 }} />
       </ScrollView>
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  reportPanel: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 0.5,
+  },
+  reportOption: {
+    paddingVertical: 10,
+    fontSize: 14,
+  },
+  storeHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+  },
+  storeInfo: {
+    flex: 1,
+  },
+  storeName: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  storeRating: {
+    fontSize: 12,
+  },
+  followButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  infoSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 0.5,
+  },
+  productName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  productPrice: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+  productDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  actionButtons: {
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 6,
+    borderWidth: 0.5,
+  },
+  actionButtonText: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  contactButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginHorizontal: 16,
+    marginVertical: 12,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  contactButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  commentsSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderTopWidth: 0.5,
+  },
+  commentsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  commentsTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  commentItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 0.5,
+  },
+  commentAuthor: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  commentText: {
+    fontSize: 13,
+  },
+  noComments: {
+    fontSize: 13,
+    textAlign: "center",
+    paddingVertical: 10,
+  },
+  addCommentButton: {
+    paddingVertical: 10,
+    borderRadius: 6,
+    borderWidth: 0.5,
+    marginTop: 10,
+  },
+  addCommentText: {
+    fontSize: 13,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  similarSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderTopWidth: 0.5,
+  },
+  similarHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  similarTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  similarList: {
+    marginHorizontal: -16,
+    paddingHorizontal: 16,
+  },
+  similarItem: {
+    width: 100,
+    marginRight: 12,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  similarImage: {
+    width: "100%",
+    height: 100,
+  },
+  similarName: {
+    fontSize: 12,
+    fontWeight: "500",
+    paddingHorizontal: 8,
+    paddingTop: 6,
+  },
+  similarPrice: {
+    fontSize: 12,
+    fontWeight: "bold",
+    paddingHorizontal: 8,
+    paddingBottom: 6,
+  },
+});
