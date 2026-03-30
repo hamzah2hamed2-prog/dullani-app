@@ -2,76 +2,57 @@ import { ScrollView, View, Text, TouchableOpacity, TextInput, FlatList, Image, A
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
-import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
+import { useConversation, useSendMessage, useMarkMessageAsRead } from "@/hooks/use-messages";
+import { useAuth } from "@/hooks/use-auth";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 
 export default function ConversationScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const colors = useColors();
-  const [messages, setMessages] = useState<any[]>([]);
+  const { user } = useAuth();
   const [newMessage, setNewMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
+  // Fetch conversation messages from API
+  const { data: messages = [], isLoading } = useConversation(Number(id));
+  const { mutate: sendMessage, isPending: isSending } = useSendMessage();
+  const { mutate: markAsRead } = useMarkMessageAsRead();
+
+  // Mark messages as read when viewing
   useEffect(() => {
-    setMessages([
-      {
-        id: 1,
-        sender: "other",
-        text: "مرحباً، كيف حالك؟",
-        timestamp: "10:30 AM",
-        senderName: "متجر الملابس الفاخرة",
-      },
-      {
-        id: 2,
-        sender: "me",
-        text: "مرحباً، أنا بخير شكراً",
-        timestamp: "10:31 AM",
-      },
-      {
-        id: 3,
-        sender: "other",
-        text: "هل تريد معرفة المزيد عن منتجاتنا الجديدة؟",
-        timestamp: "10:32 AM",
-        senderName: "متجر الملابس الفاخرة",
-      },
-      {
-        id: 4,
-        sender: "me",
-        text: "نعم، أود معرفة المزيد",
-        timestamp: "10:33 AM",
-      },
-      {
-        id: 5,
-        sender: "other",
-        text: "رائع! لدينا مجموعة جديدة من الفساتين الفاخرة",
-        timestamp: "10:34 AM",
-        senderName: "متجر الملابس الفاخرة",
-      },
-    ]);
-  }, []);
+    if (messages.length > 0) {
+      messages.forEach((msg: any) => {
+        if (!msg.isRead && msg.recipientId === user?.id) {
+          markAsRead(msg.id);
+        }
+      });
+    }
+  }, [messages, user?.id, markAsRead]);
 
   const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      const message = {
-        id: messages.length + 1,
-        sender: "me",
-        text: newMessage,
-        timestamp: new Date().toLocaleTimeString(),
-      };
-      setMessages([...messages, message]);
-      setNewMessage("");
-      
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
+    if (newMessage.trim().length === 0) return;
+
+    sendMessage(
+      {
+        recipientId: Number(id),
+        content: newMessage,
+      },
+      {
+        onSuccess: () => {
+          setNewMessage("");
+          // Scroll to bottom
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }, 100);
+        },
+      }
+    );
   };
 
   const renderMessageItem = ({ item }: any) => {
-    const isMe = item.sender === "me";
+    const isMe = item.senderId === user?.id;
     return (
       <View style={[styles.messageContainer, { justifyContent: isMe ? "flex-end" : "flex-start" }]}>
         <View
@@ -84,15 +65,26 @@ export default function ConversationScreen() {
           ]}
         >
           <Text style={[styles.messageText, { color: isMe ? colors.background : colors.foreground }]}>
-            {item.text}
+            {item.content}
           </Text>
           <Text style={[styles.messageTime, { color: isMe ? colors.background : colors.muted }]}>
-            {item.timestamp}
+            {new Date(item.createdAt).toLocaleTimeString("ar-SA", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </Text>
         </View>
       </View>
     );
   };
+
+  if (isLoading) {
+    return (
+      <ScreenContainer style={{ alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </ScreenContainer>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -106,22 +98,29 @@ export default function ConversationScreen() {
             <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
           </TouchableOpacity>
           <View style={styles.headerInfo}>
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>متجر الملابس الفاخرة</Text>
-            <Text style={[styles.headerStatus, { color: colors.muted }]}>نشط الآن</Text>
+            <Text style={[styles.headerTitle, { color: colors.foreground }]}>محادثة</Text>
+            <Text style={[styles.headerStatus, { color: colors.muted }]}>{messages.length} رسالة</Text>
           </View>
           <TouchableOpacity style={{ padding: 4 }}>
             <IconSymbol name="info.circle" size={24} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          renderItem={renderMessageItem}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.messagesList}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        />
+        {messages.length > 0 ? (
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            renderItem={renderMessageItem}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.messagesList}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          />
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={{ fontSize: 48 }}>💬</Text>
+            <Text style={[styles.emptyText, { color: colors.foreground }]}>لا توجد رسائل</Text>
+          </View>
+        )}
 
         <View style={[styles.inputContainer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
           <View style={[styles.inputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -144,8 +143,13 @@ export default function ConversationScreen() {
           <TouchableOpacity
             style={[styles.sendButton, { backgroundColor: colors.primary }]}
             onPress={handleSendMessage}
+            disabled={isSending}
           >
-            <Text style={{ color: colors.background }}>➤</Text>
+            {isSending ? (
+              <ActivityIndicator size="small" color={colors.background} />
+            ) : (
+              <Text style={{ color: colors.background }}>➤</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScreenContainer>
@@ -154,6 +158,15 @@ export default function ConversationScreen() {
 }
 
 const styles = StyleSheet.create({
+  emptyContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyText: {
+    fontSize: 14,
+    marginTop: 12,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -177,10 +190,12 @@ const styles = StyleSheet.create({
   messagesList: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    flexGrow: 1,
   },
   messageContainer: {
     flexDirection: "row",
     marginVertical: 6,
+    alignItems: "flex-end",
   },
   messageBubble: {
     maxWidth: "80%",
@@ -188,13 +203,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 0.5,
+    gap: 4,
   },
   messageText: {
     fontSize: 13,
   },
   messageTime: {
     fontSize: 10,
-    marginTop: 4,
+    marginTop: 2,
   },
   inputContainer: {
     flexDirection: "row",
