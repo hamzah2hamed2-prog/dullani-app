@@ -1,16 +1,22 @@
-import { ScrollView, View, Text, TouchableOpacity, FlatList, Image, StyleSheet } from "react-native";
+import { ScrollView, View, Text, TouchableOpacity, FlatList, Image, StyleSheet, ActivityIndicator } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
+import { useAnalytics } from "@/hooks/use-analytics";
+import { useAuth } from "@/hooks/use-auth";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 
 export default function ActivityScreen() {
   const router = useRouter();
   const colors = useColors();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("recent");
+  const [timeRange, setTimeRange] = useState<"week" | "month" | "all">("week");
 
-  const activities = [
+  const { data: activityData, isLoading } = useAnalytics(user?.id, timeRange);
+
+  const activities = activityData?.activities || [
     {
       id: 1,
       type: "like",
@@ -53,7 +59,7 @@ export default function ActivityScreen() {
     },
   ];
 
-  const stats = [
+  const stats = activityData?.stats || [
     { label: "الإعجابات", value: 342, icon: "❤️" },
     { label: "التعليقات", value: 89, icon: "💬" },
     { label: "المشاركات", value: 45, icon: "📤" },
