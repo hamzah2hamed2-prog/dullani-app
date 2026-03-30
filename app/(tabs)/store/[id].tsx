@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { FollowButton } from "@/components/follow-button";
 import { useColors } from "@/hooks/use-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useStore, useStoreProducts, useStoreRatings, useFollowStore } from "@/hooks/use-stores";
 
 const { width } = Dimensions.get("window");
 
@@ -18,26 +19,27 @@ export default function StoreProfileScreen() {
   const [showRatings, setShowRatings] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false);
 
-  const { data: store, isLoading } = trpc.stores.getById.useQuery(
-    { id: parseInt(id as string) },
-    { enabled: !!id }
-  );
-
-  const { data: products = [], isLoading: productsLoading } = trpc.products.getByStore.useQuery(
-    { storeId: parseInt(id as string) },
-    { enabled: !!id }
-  );
-
-  const { data: followers = 0 } = trpc.social.getStoreFollowersCount.useQuery(
-    { storeId: parseInt(id as string) },
-    { enabled: !!id }
-  );
+  const { data: store, isLoading } = useStore(id as string);
+  const { data: products = [], isLoading: productsLoading } = useStoreProducts(id as string);
+  const { data: ratings } = useStoreRatings(id as string);
+  const followMutation = useFollowStore();
 
   useEffect(() => {
-    if (typeof followers === "number") {
-      setFollowersCount(followers);
+    if (store?.followersCount) {
+      setFollowersCount(store.followersCount);
     }
-  }, [followers]);
+  }, [store?.followersCount]);
+
+  const handleFollowStore = async () => {
+    try {
+      await followMutation.mutateAsync({
+        storeId: id as string,
+        following: store?.isFollowing || false,
+      });
+    } catch (error) {
+      console.error("Error following store:", error);
+    }
+  };
 
   const handleContactStore = () => {
     if (store?.phone) {

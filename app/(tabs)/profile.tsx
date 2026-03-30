@@ -5,6 +5,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { trpc } from "@/lib/trpc";
+import { useProfile, useUserStats, useUpdateProfile } from "@/hooks/use-profile";
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = width / 3;
@@ -13,6 +14,11 @@ export default function ProfileScreen() {
   const router = useRouter();
   const colors = useColors();
   const { user, isAuthenticated, loading, logout } = useAuth();
+
+  // Fetch user profile data
+  const { data: profile } = useProfile();
+  const { data: stats } = useUserStats(user?.id || "");
+  const updateProfileMutation = useUpdateProfile();
 
   // Fetch user's store if they are a merchant
   const { data: store } = trpc.stores.getByUserId.useQuery(undefined, {
