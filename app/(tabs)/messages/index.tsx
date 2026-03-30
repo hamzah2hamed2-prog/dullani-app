@@ -1,75 +1,34 @@
-import { ScrollView, View, Text, TouchableOpacity, FlatList, Image, ActivityIndicator, StyleSheet } from "react-native";
-import { useState, useEffect } from "react";
+import { ScrollView, View, Text, TouchableOpacity, FlatList, Image, ActivityIndicator, StyleSheet, TextInput } from "react-native";
+import { useState } from "react";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
-import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
+import { useConversations, useUnreadMessageCount, useSearchConversations } from "@/hooks/use-messages";
+import { useAuth } from "@/hooks/use-auth";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 
 export default function MessagesScreen() {
   const router = useRouter();
   const colors = useColors();
-  const [conversations, setConversations] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Mock conversations data
-  useEffect(() => {
-    setConversations([
-      {
-        id: 1,
-        participantName: "متجر الملابس الفاخرة",
-        participantImage: "https://via.placeholder.com/50",
-        lastMessage: "شكراً على اهتمامك بمنتجاتنا",
-        timestamp: "قبل ساعة",
-        unreadCount: 2,
-        isOnline: true,
-      },
-      {
-        id: 2,
-        participantName: "أحمد محمد",
-        participantImage: "https://via.placeholder.com/50",
-        lastMessage: "هل المنتج متوفر الآن؟",
-        timestamp: "قبل 3 ساعات",
-        unreadCount: 0,
-        isOnline: false,
-      },
-      {
-        id: 3,
-        participantName: "متجر الإلكترونيات",
-        participantImage: "https://via.placeholder.com/50",
-        lastMessage: "تم استقبال طلبك بنجاح",
-        timestamp: "أمس",
-        unreadCount: 1,
-        isOnline: true,
-      },
-      {
-        id: 4,
-        participantName: "فاطمة علي",
-        participantImage: "https://via.placeholder.com/50",
-        lastMessage: "شكراً على الخدمة الممتازة",
-        timestamp: "قبل يومين",
-        unreadCount: 0,
-        isOnline: false,
-      },
-    ]);
-  }, []);
+  // Fetch conversations from API
+  const { data: conversations = [], isLoading } = useConversations(user?.id);
+  const { data: unreadCount = 0 } = useUnreadMessageCount(user?.id);
+  const { data: searchResults = [] } = useSearchConversations(user?.id || 0, searchQuery);
 
-  const handleNewMessage = () => {
-    router.push("/(tabs)/messages/new");
-  };
+  const displayConversations = searchQuery.length > 0 ? searchResults : conversations;
 
-  const handleConversationPress = (conversationId: number) => {
-    router.push(`/(tabs)/messages/${conversationId}`);
-  };
+
 
   const renderConversationItem = ({ item }: any) => (
     <TouchableOpacity
       style={[styles.conversationItem, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}
-      onPress={() => handleConversationPress(item.id)}
+      onPress={() => router.push(`/(tabs)/messages/${item.id}`)}
     >
       <View style={styles.avatarContainer}>
-        <Image source={{ uri: item.participantImage }} style={styles.avatar} />
-        {item.isOnline && <View style={[styles.onlineIndicator, { backgroundColor: colors.success }]} />}
+        <Image source={{ uri: item.participantAvatar || "https://via.placeholder.com/50" }} style={styles.avatar} />
       </View>
 
       <View style={styles.conversationContent}>
@@ -77,10 +36,12 @@ export default function MessagesScreen() {
           <Text style={[styles.participantName, { color: colors.foreground }]} numberOfLines={1}>
             {item.participantName}
           </Text>
-          <Text style={[styles.timestamp, { color: colors.muted }]}>{item.timestamp}</Text>
+          <Text style={[styles.timestamp, { color: colors.muted }]}>
+            {item.lastMessageTime ? new Date(item.lastMessageTime).toLocaleDateString("ar-SA") : ""}
+          </Text>
         </View>
         <Text style={[styles.lastMessage, { color: colors.muted }]} numberOfLines={1}>
-          {item.lastMessage}
+          {item.lastMessage || "لا توجد رسائل"}
         </Text>
       </View>
 
@@ -99,18 +60,24 @@ export default function MessagesScreen() {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>الرسائل</Text>
-        <TouchableOpacity
-          style={[styles.newMessageButton, { backgroundColor: colors.primary }]}
-          onPress={handleNewMessage}
-        >
-          <IconSymbol name="pencil" size={18} color={colors.background} />
-        </TouchableOpacity>
+        {unreadCount > 0 && (
+          <View style={[styles.headerBadge, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.badgeText, { color: colors.background }]}>{unreadCount}</Text>
+          </View>
+        )}
       </View>
 
       {/* Search Bar */}
-      <View style={[styles.searchContainer, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <IconSymbol name="magnifyingglass" size={16} color={colors.muted} />
-        <Text style={[styles.searchPlaceholder, { color: colors.muted }]}>ابحث عن محادثة...</Text>
+      <View style={[styles.searchContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <TextInput
+            style={[styles.searchInput, { color: colors.foreground }]}
+            placeholder="ابحث عن محادثة..."
+            placeholderTextColor={colors.muted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
       </View>
 
       {/* Conversations List */}
@@ -118,23 +85,23 @@ export default function MessagesScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
-      ) : conversations.length > 0 ? (
+      ) : displayConversations.length > 0 ? (
         <FlatList
-          data={conversations}
+          data={displayConversations}
           renderItem={renderConversationItem}
           keyExtractor={(item) => item.id.toString()}
           scrollEnabled={true}
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <IconSymbol name="bubble.left" size={48} color={colors.muted} />
+          <Text style={{ fontSize: 48 }}>💬</Text>
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>لا توجد محادثات</Text>
           <Text style={[styles.emptyDescription, { color: colors.muted }]}>
-            ابدأ محادثة جديدة مع التجار والمستخدمين
+            ابدأ محادثة جديدة مع متجرك المفضل
           </Text>
           <TouchableOpacity
             style={[styles.emptyButton, { backgroundColor: colors.primary }]}
-            onPress={handleNewMessage}
+            onPress={() => router.push("/(tabs)/messages/new")}
           >
             <Text style={[styles.emptyButtonText, { color: colors.background }]}>رسالة جديدة</Text>
           </TouchableOpacity>
@@ -157,13 +124,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-  newMessageButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+
+
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -179,6 +141,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     flex: 1,
   },
+
   conversationItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -194,16 +157,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-  },
-  onlineIndicator: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: "white",
   },
   conversationContent: {
     flex: 1,
@@ -231,6 +184,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "transparent",
   },
   unreadCount: {
     fontSize: 11,
@@ -242,7 +196,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   emptyContainer: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
