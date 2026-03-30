@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LikeButton } from "@/components/like-button";
+import { useProduct, useSimilarProducts, useWishlist } from "@/hooks/use-products";
 
 const { width } = Dimensions.get("window");
 
@@ -19,10 +20,7 @@ export default function ProductDetailScreen() {
   const [showSimilarProducts, setShowSimilarProducts] = useState(true);
 
   // Fetch product data
-  const { data: product, isLoading } = trpc.products.getById.useQuery(
-    { id: parseInt(id as string) },
-    { enabled: !!id }
-  );
+  const { data: product, isLoading } = useProduct(id as string);
 
   // Fetch store data
   const { data: store } = trpc.stores.getById.useQuery(
@@ -37,14 +35,8 @@ export default function ProductDetailScreen() {
   );
 
   // Fetch similar products
-  const { data: allProducts = [] } = trpc.products.list.useQuery({
-    limit: 10,
-    offset: 0,
-  });
-
-  const similarProducts = allProducts.filter(
-    (p: any) => p.category === product?.category && p.id !== product?.id
-  );
+  const { data: similarProductsData = [] } = useSimilarProducts(id as string, 6);
+  const similarProducts = similarProductsData;
 
   // Check if in wishlist
   const { data: inWishlist } = trpc.wishlist.isInWishlist.useQuery(
@@ -52,14 +44,8 @@ export default function ProductDetailScreen() {
     { enabled: !!id }
   );
 
-  // Wishlist mutations
-  const addMutation = trpc.wishlist.add.useMutation({
-    onSuccess: () => setIsInWishlist(true),
-  });
-
-  const removeMutation = trpc.wishlist.remove.useMutation({
-    onSuccess: () => setIsInWishlist(false),
-  });
+  // Wishlist mutation
+  const wishlistMutation = useWishlist();
 
   useEffect(() => {
     if (inWishlist !== undefined) {
@@ -71,11 +57,10 @@ export default function ProductDetailScreen() {
     const nextState = !isInWishlist;
     setIsInWishlist(nextState);
     try {
-      if (nextState) {
-        await addMutation.mutateAsync({ productId: parseInt(id as string) });
-      } else {
-        await removeMutation.mutateAsync({ productId: parseInt(id as string) });
-      }
+      await wishlistMutation.mutateAsync({
+        productId: id as string,
+        inWishlist: isInWishlist,
+      });
     } catch (error) {
       setIsInWishlist(!nextState);
     }

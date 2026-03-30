@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "expo-router";
 import {
   View,
@@ -19,6 +19,7 @@ import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/hooks/use-auth";
+import { useSearchProducts, useSearchSuggestions } from "@/hooks/use-products";
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = width / 3;
@@ -40,11 +41,18 @@ export default function SearchScreen() {
     sortBy: "newest",
   });
 
-  // Fetch all products
-  const { data: products = [], isLoading: productsLoading } = trpc.products.list.useQuery({
-    limit: 100,
-    offset: 0,
+  // Fetch search results
+  const { data: searchResults, isLoading: searchLoading } = useSearchProducts(searchQuery, {
+    categoryId: selectedCategory || undefined,
+    minPrice: advancedFilters.priceMin,
+    maxPrice: advancedFilters.priceMax,
+    rating: advancedFilters.rating,
   });
+
+  // Fetch search suggestions
+  const { data: suggestions = [] } = useSearchSuggestions(searchQuery);
+
+  const products = searchResults?.products || [];
 
   // Fetch categories
   const { data: categories = [], isLoading: categoriesLoading } = trpc.categories.list.useQuery();
@@ -66,6 +74,7 @@ export default function SearchScreen() {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setShowSearchHistory(query.length === 0);
+    setIsSearching(true);
     if (query.trim() && isAuthenticated) {
       addSearchMutation.mutate({ query: query.trim() });
     }
