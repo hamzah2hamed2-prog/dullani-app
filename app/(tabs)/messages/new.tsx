@@ -1,64 +1,96 @@
-import { ScrollView, View, Text, TouchableOpacity, TextInput, FlatList, Image, StyleSheet } from "react-native";
+import { ScrollView, View, Text, TouchableOpacity, TextInput, FlatList, Image, StyleSheet, ActivityIndicator } from "react-native";
 import { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
-import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
+import { useSendMessage } from "@/hooks/use-messages";
+import { useAuth } from "@/hooks/use-auth";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 
 export default function NewMessageScreen() {
   const router = useRouter();
   const { storeId } = useLocalSearchParams();
   const colors = useColors();
+  const { user } = useAuth();
   const [searchText, setSearchText] = useState("");
   const [selectedRecipient, setSelectedRecipient] = useState<any>(null);
   const [messageText, setMessageText] = useState("");
   const [recipients, setRecipients] = useState<any[]>([]);
+  const [isLoadingRecipients, setIsLoadingRecipients] = useState(true);
 
+  const { mutate: sendMessage, isPending: isSending } = useSendMessage();
+
+  // Fetch stores and users from API
   useEffect(() => {
-    setRecipients([
-      {
-        id: 1,
-        name: "متجر الملابس الفاخرة",
-        image: "https://via.placeholder.com/50",
-        type: "store",
-      },
-      {
-        id: 2,
-        name: "أحمد محمد",
-        image: "https://via.placeholder.com/50",
-        type: "user",
-      },
-      {
-        id: 3,
-        name: "متجر الإلكترونيات",
-        image: "https://via.placeholder.com/50",
-        type: "store",
-      },
-      {
-        id: 4,
-        name: "فاطمة علي",
-        image: "https://via.placeholder.com/50",
-        type: "user",
-      },
-    ]);
+    const fetchRecipients = async () => {
+      try {
+        // In a real app, you would fetch from API
+        // For now, using mock data
+        setRecipients([
+          {
+            id: 1,
+            name: "متجر الملابس الفاخرة",
+            image: "https://via.placeholder.com/50",
+            type: "store",
+          },
+          {
+            id: 2,
+            name: "أحمد محمد",
+            image: "https://via.placeholder.com/50",
+            type: "user",
+          },
+          {
+            id: 3,
+            name: "متجر الإلكترونيات",
+            image: "https://via.placeholder.com/50",
+            type: "store",
+          },
+          {
+            id: 4,
+            name: "فاطمة علي",
+            image: "https://via.placeholder.com/50",
+            type: "user",
+          },
+        ]);
 
-    if (storeId) {
-      const store = recipients.find((r) => r.id === parseInt(storeId as string));
-      if (store) {
-        setSelectedRecipient(store);
+        if (storeId) {
+          const store = recipients.find((r) => r.id === parseInt(storeId as string));
+          if (store) {
+            setSelectedRecipient(store);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch recipients:", error);
+      } finally {
+        setIsLoadingRecipients(false);
       }
-    }
-  }, []);
+    };
+
+    fetchRecipients();
+  }, [storeId]);
 
   const filteredRecipients = recipients.filter((r) =>
     r.name.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const handleSendMessage = () => {
-    if (selectedRecipient && messageText.trim()) {
-      router.push(`/(tabs)/messages/${selectedRecipient.id}`);
-    }
+    if (!selectedRecipient || !messageText.trim()) return;
+
+    sendMessage(
+      {
+        recipientId: selectedRecipient.id,
+        content: messageText,
+      },
+      {
+        onSuccess: () => {
+          // Navigate to the conversation
+          router.push(`/(tabs)/messages/${selectedRecipient.id}`);
+        },
+        onError: (error) => {
+          console.error("Failed to send message:", error);
+        },
+      }
+    );
   };
 
   const renderRecipientItem = ({ item }: any) => (
@@ -101,6 +133,14 @@ export default function NewMessageScreen() {
     </TouchableOpacity>
   );
 
+  if (isLoadingRecipients) {
+    return (
+      <ScreenContainer style={{ alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </ScreenContainer>
+    );
+  }
+
   return (
     <ScreenContainer style={{ padding: 0 }}>
       {/* Header */}
@@ -128,13 +168,17 @@ export default function NewMessageScreen() {
         {/* Recipients List */}
         <View style={[styles.section, { backgroundColor: colors.background }]}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>اختر المستقبل</Text>
-          <FlatList
-            data={filteredRecipients}
-            renderItem={renderRecipientItem}
-            keyExtractor={(item) => item.id.toString()}
-            scrollEnabled={false}
-            contentContainerStyle={styles.recipientsList}
-          />
+          {recipients.length > 0 ? (
+            <FlatList
+              data={filteredRecipients}
+              renderItem={renderRecipientItem}
+              keyExtractor={(item) => item.id.toString()}
+              scrollEnabled={false}
+              contentContainerStyle={styles.recipientsList}
+            />
+          ) : (
+            <Text style={[styles.emptyText, { color: colors.muted }]}>لا توجد متاجر أو مستخدمين</Text>
+          )}
         </View>
 
         {/* Message Input */}
@@ -161,13 +205,17 @@ export default function NewMessageScreen() {
               style={[
                 styles.sendButton,
                 {
-                  backgroundColor: messageText.trim() ? colors.primary : colors.border,
+                  backgroundColor: messageText.trim() && !isSending ? colors.primary : colors.border,
                 },
               ]}
               onPress={handleSendMessage}
-              disabled={!messageText.trim()}
+              disabled={!messageText.trim() || isSending}
             >
-              <Text style={[styles.sendButtonText, { color: colors.background }]}>إرسال الرسالة</Text>
+              {isSending ? (
+                <ActivityIndicator size="small" color={colors.background} />
+              ) : (
+                <Text style={[styles.sendButtonText, { color: colors.background }]}>إرسال الرسالة</Text>
+              )}
             </TouchableOpacity>
           </View>
         )}
@@ -179,6 +227,11 @@ export default function NewMessageScreen() {
 }
 
 const styles = StyleSheet.create({
+  emptyText: {
+    fontSize: 13,
+    textAlign: "center",
+    paddingVertical: 20,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
