@@ -95,6 +95,21 @@ export const ratings = mysqlTable("ratings", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+// User passwords table - for email/password authentication
+export const userPasswords = mysqlTable("userPasswords", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
+  passwordResetToken: varchar("passwordResetToken", { length: 255 }),
+  passwordResetExpiresAt: timestamp("passwordResetExpiresAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserPassword = typeof userPasswords.$inferSelect;
+export type InsertUserPassword = typeof userPasswords.$inferInsert;
+
 // Notifications table
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
