@@ -6,6 +6,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ScreenContainer } from "@/components/screen-container";
 import * as Auth from "@/lib/_core/auth";
 import { useAuth } from "@/hooks/use-auth";
+import { ErrorDisplay } from "@/components/error-display";
 
 export default function LoginScreen() {
   const colors = useColors();
@@ -24,27 +25,69 @@ export default function LoginScreen() {
       return;
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert("الرجاء إدخال بريد إلكتروني صحيح");
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      alert("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // In a real app, this would call your backend API
-      // For MVP, we simulate a successful login by creating a mock user
-      const mockUser: Auth.User = {
-        id: Math.floor(Math.random() * 1000),
-        openId: "mock-id",
-        name: email.split("@")[0],
-        email: email,
-        loginMethod: "email",
-        lastSignedIn: new Date(),
-        accountType: isLogin ? "consumer" : accountType // Default to consumer on login, selected on signup
+      const endpoint = isLogin ? "/api/auth/login" : "/api/auth/signup";
+      const payload = {
+        email,
+        password,
+        ...(isLogin ? {} : { accountType }),
       };
 
-      await Auth.setUserInfo(mockUser);
-      // Simulate session token
-      await Auth.setSessionToken("mock-session-token");
-      
+      console.log("[Login] Calling", endpoint, "with:", { email, accountType: isLogin ? "N/A" : accountType });
+
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000"}${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || "فشل المصادقة");
+      }
+
+      // Handle response
+      if (data.sessionToken) {
+        await Auth.setSessionToken(data.sessionToken);
+      }
+
+      if (data.user) {
+        const user: Auth.User = {
+          id: data.user.id,
+          openId: data.user.openId,
+          name: data.user.name,
+          email: data.user.email,
+          loginMethod: data.user.loginMethod || "email",
+          lastSignedIn: new Date(data.user.lastSignedIn),
+          accountType: data.user.accountType || "consumer",
+        };
+        await Auth.setUserInfo(user);
+      }
+
       // Refresh global auth state
       await refresh();
-      
+
+      // Show success message
+      alert(isLogin ? "تم تسجيل الدخول بنجاح" : "تم إنشاء الحساب بنجاح");
+
       // Navigate back or to home
       if (router.canGoBack()) {
         router.back();
@@ -52,8 +95,9 @@ export default function LoginScreen() {
         router.replace("/");
       }
     } catch (error) {
-      alert("حدث خطأ أثناء المصادقة");
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : "حدث خطأ أثناء المصادقة";
+      alert(errorMessage);
+      console.error("[Login] Error:", error);
     } finally {
       setIsLoading(false);
     }
