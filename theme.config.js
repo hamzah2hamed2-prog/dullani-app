@@ -1,27 +1,32 @@
 /** @type {const} */
 const themeColors = {
-  // Primary color - Instagram Pink/Magenta
-  primary: { light: '#E1306C', dark: '#E1306C' },
+  // Primary color - Modern Gradient Purple/Pink (Dullani Brand)
+  primary: { light: '#7C3AED', dark: '#A78BFA' },
   
-  // Background colors - Pure white and Pure black
-  background: { light: '#FFFFFF', dark: '#000000' },
+  // Background colors - Modern light and dark
+  background: { light: '#F8F7FF', dark: '#0F0F1E' },
   
-  // Surface colors - Slightly off-white and very dark grey
-  surface: { light: '#FAFAFA', dark: '#121212' },
+  // Surface colors - Elevated surfaces with depth
+  surface: { light: '#FFFFFF', dark: '#1A1A2E' },
   
-  // Text colors
-  foreground: { light: '#262626', dark: '#F5F5F5' },
+  // Text colors - High contrast and readable
+  foreground: { light: '#1F2937', dark: '#F3F4F6' },
   
-  // Muted/secondary text
-  muted: { light: '#8E8E8E', dark: '#A8A8A8' },
+  // Muted/secondary text - Softer appearance
+  muted: { light: '#6B7280', dark: '#9CA3AF' },
   
-  // Border colors
-  border: { light: '#DBDBDB', dark: '#262626' },
+  // Border colors - Subtle and modern
+  border: { light: '#E5E7EB', dark: '#374151' },
   
-  // Status colors
-  success: { light: '#0095F6', dark: '#0095F6' }, // Instagram Blue for links/success
+  // Status colors - Vibrant and accessible
+  success: { light: '#10B981', dark: '#34D399' },
   warning: { light: '#F59E0B', dark: '#FBBF24' },
-  error: { light: '#ED4956', dark: '#ED4956' }, // Instagram Red
+  error: { light: '#EF4444', dark: '#F87171' },
+  
+  // Additional accent colors for richer design
+  accent: { light: '#EC4899', dark: '#F472B6' },
+  info: { light: '#3B82F6', dark: '#60A5FA' },
+  secondary: { light: '#8B5CF6', dark: '#A78BFA' },
 };
 
 module.exports = { themeColors };
