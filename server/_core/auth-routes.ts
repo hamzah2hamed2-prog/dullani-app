@@ -348,4 +348,172 @@ router.post("/password/update", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /api/auth/logout
+ * Logout the current user
+ */
+router.post("/logout", async (req: Request, res: Response) => {
+  try {
+    // Clear session cookie
+    res.clearCookie(COOKIE_NAME);
+
+    return res.status(200).json({
+      success: true,
+      message: "تم تسجيل الخروج بنجاح",
+    });
+  } catch (error) {
+    console.error("[Auth] Logout error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "خطأ في الخادم",
+      message: "حدث خطأ أثناء معالجة الطلب",
+    });
+  }
+});
+
+/**
+ * GET /api/auth/me
+ * Get current user data
+ */
+router.get("/me", async (req: Request, res: Response) => {
+  try {
+    // Get user ID from request (should be set by middleware)
+    const userId = (req as any).userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "غير مصرح",
+        message: "جلسة غير صحيحة أو منتهية",
+      });
+    }
+
+    const db = await getDb();
+    if (!db) {
+      return res.status(500).json({
+        success: false,
+        error: "خطأ في الخادم",
+        message: "قاعدة البيانات غير متاحة",
+      });
+    }
+
+    // Get user from database
+    const { users } = require("../../drizzle/schema");
+    const { eq } = require("drizzle-orm");
+    const userResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+
+    if (!userResult || userResult.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "المستخدم غير موجود",
+        message: "لم يتم العثور على بيانات المستخدم",
+      });
+    }
+
+    const user = userResult[0];
+
+    return res.status(200).json({
+      user: {
+        id: user.id,
+        openId: user.openId,
+        name: user.name,
+        email: user.email,
+        loginMethod: user.loginMethod,
+        lastSignedIn: user.lastSignedIn,
+        accountType: user.accountType,
+      },
+    });
+  } catch (error) {
+    console.error("[Auth] Get user error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "خطأ في الخادم",
+      message: "حدث خطأ أثناء معالجة الطلب",
+    });
+  }
+});
+
+/**
+ * PUT /api/auth/profile
+ * Update user profile
+ */
+router.put("/profile", async (req: Request, res: Response) => {
+  try {
+    // Get user ID from request (should be set by middleware)
+    const userId = (req as any).userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "غير مصرح",
+        message: "جلسة غير صحيحة أو منتهية",
+      });
+    }
+
+    const { name, phone, bio } = req.body;
+
+    // Validate input (at least one field should be provided)
+    if (!name && !phone && !bio) {
+      return res.status(400).json({
+        success: false,
+        error: "بيانات غير صحيحة",
+        message: "يجب تقديم حقل واحد على الأقل للتحديث",
+      });
+    }
+
+    const db = await getDb();
+    if (!db) {
+      return res.status(500).json({
+        success: false,
+        error: "خطأ في الخادم",
+        message: "قاعدة البيانات غير متاحة",
+      });
+    }
+
+    // Update user
+    const { users } = require("../../drizzle/schema");
+    const { eq } = require("drizzle-orm");
+    
+    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (phone !== undefined) updateData.phone = phone;
+    if (bio !== undefined) updateData.bio = bio;
+
+    await db.update(users).set(updateData).where(eq(users.id, userId));
+
+    // Get updated user
+    const userResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+
+    if (!userResult || userResult.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "المستخدم غير موجود",
+        message: "لم يتم العثور على بيانات المستخدم",
+      });
+    }
+
+    const user = userResult[0];
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        id: user.id,
+        openId: user.openId,
+        name: user.name,
+        email: user.email,
+        loginMethod: user.loginMethod,
+        lastSignedIn: user.lastSignedIn,
+        accountType: user.accountType,
+      },
+    });
+  } catch (error) {
+    console.error("[Auth] Update profile error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "خطأ في الخادم",
+      message: "حدث خطأ أثناء معالجة الطلب",
+    });
+  }
+});
+
 export default router;
