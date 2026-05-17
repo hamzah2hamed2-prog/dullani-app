@@ -1,61 +1,28 @@
-import { Tabs, useNavigation } from "expo-router";
+import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View, StyleSheet, Platform } from "react-native";
 import { useColors } from "@/hooks/use-colors";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { CustomTabBar } from "@/components/custom-tab-bar";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 
 export default function TabLayout() {
   const colors = useColors();
   const [activeTab, setActiveTab] = useState(0);
 
-  // Tab configuration
-  const tabs = [
-    {
-      name: "index",
-      icon: "home",
-      iconFocused: "home",
-      label: "الرئيسية",
-    },
-    {
-      name: "search",
-      icon: "search",
-      iconFocused: "search",
-      label: "بحث",
-    },
-    {
-      name: "wishlist",
-      icon: "favorite-border",
-      iconFocused: "favorite",
-      label: "المفضلة",
-    },
-    {
-      name: "following",
-      icon: "people-outline",
-      iconFocused: "people",
-      label: "المتابعون",
-    },
-    {
-      name: "profile",
-      icon: "account-circle",
-      iconFocused: "account-circle",
-      label: "الملف",
-    },
-  ];
 
-  const navigation = useNavigation();
+
   const tabNames = ["index", "search", "wishlist", "following", "profile"];
+  const navigationRef = useRef(null);
 
   const handleTabPress = useCallback((index: number) => {
     setActiveTab(index);
-    // Navigate to the tab using the navigation state
     const tabName = tabNames[index];
-    if (tabName) {
-      // Use the Tabs navigation to switch tabs
-      navigation.navigate(tabName);
+    if (tabName && navigationRef.current) {
+      // Use the Tabs navigation ref to switch tabs
+      (navigationRef.current as any).jumpTo(tabName);
     }
-  }, [navigation]);
+  }, []);
 
   const tabConfig = useMemo(() => [
     {
@@ -93,6 +60,7 @@ export default function TabLayout() {
   return (
     <View style={{ flex: 1 }}>
       <Tabs
+        ref={navigationRef}
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
@@ -102,7 +70,6 @@ export default function TabLayout() {
         screenListeners={{
           state: (e) => {
             // Update active tab based on route
-            const tabNames = ["index", "search", "wishlist", "following", "profile"];
             const currentRoute = e.data.state.routes[e.data.state.index]?.name;
             const tabIndex = tabNames.indexOf(currentRoute);
             if (tabIndex !== -1) {
