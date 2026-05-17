@@ -1,10 +1,10 @@
-import { Tabs } from "expo-router";
+import { Tabs, useNavigation } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View, StyleSheet, Platform } from "react-native";
 import { useColors } from "@/hooks/use-colors";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { CustomTabBar } from "@/components/custom-tab-bar";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 export default function TabLayout() {
   const colors = useColors();
@@ -44,14 +44,20 @@ export default function TabLayout() {
     },
   ];
 
-  const handleTabPress = (index: number) => {
-    setActiveTab(index);
-    // Navigate to the tab
-    const tabNames = ["index", "search", "wishlist", "following", "profile"];
-    // This will be handled by Tabs component
-  };
+  const navigation = useNavigation();
+  const tabNames = ["index", "search", "wishlist", "following", "profile"];
 
-  const tabConfig = [
+  const handleTabPress = useCallback((index: number) => {
+    setActiveTab(index);
+    // Navigate to the tab using the navigation state
+    const tabName = tabNames[index];
+    if (tabName) {
+      // Use the Tabs navigation to switch tabs
+      navigation.navigate(tabName);
+    }
+  }, [navigation]);
+
+  const tabConfig = useMemo(() => [
     {
       name: "index",
       icon: "home",
@@ -82,7 +88,7 @@ export default function TabLayout() {
       iconFocused: "account-circle",
       label: "الملف",
     },
-  ];
+  ], []);
 
   return (
     <View style={{ flex: 1 }}>

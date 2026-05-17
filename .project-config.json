@@ -1,0 +1,45 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [
+    "db",
+    "server",
+    "user"
+  ],
+  "dev_command": "pnpm run dev",
+  "env_vars": {
+    "DATABASE_URL": "mysql://2PTW5WYTmCAoFrg.7eb54ed6985f:8yTP8Rrzosk069xtCB4S@gateway02.us-east-1.prod.aws.tidbcloud.com:4000/fNrx6CJvXW9f2Kaedm4siB?ssl={\"rejectUnauthorized\":true}"
+  },
+  "experiments": null,
+  "git_remote": {
+    "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663202408733/fNrx6CJvXW9f2Kaedm4siB",
+    "access_key_id": "ASIAZV3A2ECZNYF5A2LW",
+    "secret_access_key": "XaOifZBK5XSD8doBfkTEkWz8WzsjpM0C1g4JYfEa",
+    "session_token": "IQoJb3JpZ2luX2VjEOX//////////wEaCXVzLWVhc3QtMSJHMEUCIA27SRVkMSuTYmL07F+xw/nM3zWjyeDwYJNyM8VeyVKIAiEAlLW2GT8sfVnNVr72m0i7b+XT5BDamK6iOI3YWKU3boQq/wMIrf//////////ARAEGgw2NjUzODYwOTg4NjYiDOpijYtSogX8S40EXirTAxnSUo7qr2K3diXYF0EQRcqchJqllll3tXonciNMamX0sIz7sL2MwBJPBZroo9gUiRg9NHmdiMqbHnbDGN5ejC+5rQiKb6a0V0zPb7f1PmQnZodfHT+B3v2F+X2WLCBEq/IKo5tiWX3YH+Y7qc8CgXYF6In23EpCrqzpPBElb+phw+JJGLdymYAvtvAo3Rr8pqNKYlDu5Hof05ThrU06XjUI5SG5E7dROfwueAJlX1pq7a7GFA5KXmGIv44vb1Bx1l2j/PctUcfqm6OFX0YiKyxDBnj85An3Eu0gGBtb0UvOALfGDs4wSkBtGIsqoQJNtxXSueQMqq1ygX0/WeG8f2tk8gctSS8xwqRVp+XvtUpoaIpfO8Q1mJWdKQKomAcXMwHYyfq8k24MU8WZovVBzd1czRwxTxevkWZKj4ezZSuA3sNvH0OJ8vNr1J+XmqaWXQXxDPTseRWy2CEqmtnzQmGK7lWsqUprg6XxTUigtjzK1tWGPR3bUP7wE+HjM16esV7aKLhPgi8WcB+s2qMB0pswTHt08RuiHCUacrWE2iyrrqSVphRwXsdlWqCqNtq2OETQhyOLDO5Il/X9jV1Yiw+Ht7s+a4CReFeC8VwNF7BprHpWMLDCqNAGOp0BHNsRzl+XERbA7NF19mOBu/IFjgU/uh9QD3HMIHnrTRVN/52zBXGeusq6qQKO6uo62dERvxVf6X7E9SbzqRcPnKiMdUB3E+k+NkvIkELuUcNz3SIdVxQnWU9D/WTpXQRw+TPvDdcxYSXsg5mFCCet8OyBaaF2DCfsSY6EbdXCGiaOKAd6d96YZdTxAplpkLTt0e388FJQH9z8tHLhUw==",
+    "expiration": "2026-05-18T08:12:32.000Z"
+  },
+  "name": "dullani-app",
+  "path": "/home/ubuntu/dullani-app",
+  "port": 3000,
+  "secrets": {
+    "BUILT_IN_FORGE_API_KEY": "WHewxUH3iD4mQpkRs2Sprc",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "EXPO_APP_QR_URL": "exps://8081-idxbzxd4n7jeenlgko3cw-355115fe.us2.manus.computer",
+    "EXPO_PACKAGER_PROXY_URL": "https://8081-idxbzxd4n7jeenlgko3cw-355115fe.us2.manus.computer",
+    "EXPO_PUBLIC_API_BASE_URL": "https://3000-idxbzxd4n7jeenlgko3cw-355115fe.us2.manus.computer",
+    "JWT_SECRET": "CckNc9sibRz3KwGVz2kAhN",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "حمزة حميد",
+    "OWNER_OPEN_ID": "jZkwA6CWLsEyy6ufr9Xc3U",
+    "REACT_NATIVE_PACKAGER_HOSTNAME": "8081-idxbzxd4n7jeenlgko3cw-355115fe.us2.manus.computer",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "c8837fdc-381f-4664-83d8-4aefc036427f",
+    "VITE_APP_ID": "fNrx6CJvXW9f2Kaedm4siB",
+    "VITE_APP_LOGO": "https://private-us-east-1.manuscdn.com/sessionFile/H5oVVVECWjHydL5vjXmwYG/sandbox/AFkZRJbmKiijeV4pAsLrij-img-1_1770777600000_na1fn_aWNvbg.png",
+    "VITE_APP_TITLE": "Dullani",
+    "VITE_FRONTEND_FORGE_API_KEY": "J7kWuU8vfiakKjJykAbm2z",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im"
+  },
+  "template_id": "app",
+  "test_command": "pnpm test"
+}
