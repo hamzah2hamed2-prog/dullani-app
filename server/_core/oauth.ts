@@ -134,14 +134,63 @@ export function registerOAuthRoutes(app: Express) {
     res.json({ success: true });
   });
 
-  // Get current authenticated user - works with both cookie (web) and Bearer token (mobile)
+  // Get current authenticated user - works with both OAuth and Email/Password
   app.get("/api/auth/me", async (req: Request, res: Response) => {
     try {
+      // Try OAuth first
       const user = await sdk.authenticateRequest(req);
       res.json({ user: buildUserResponse(user) });
-    } catch (error) {
-      console.error("[Auth] /api/auth/me failed:", error);
-      res.status(401).json({ error: "Not authenticated", user: null });
+    } catch (oauthError) {
+      // If OAuth fails, try Email/Password authentication
+      try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          return res.status(401).json({ error: "Not authenticated", user: null });
+        }
+
+        const sessionToken = authHeader.substring(7);
+        const parts = sessionToken.split("-");
+        
+        if (parts.length < 3 || parts[0] !== "token") {
+          return res.status(401).json({ error: "Not authenticated", user: null });
+        }
+
+        const userId = parseInt(parts[1], 10);
+        if (isNaN(userId)) {
+          return res.status(401).json({ error: "Not authenticated", user: null });
+        }
+
+        // Get user from database
+        const { getDb } = require("../db");
+        const db = await getDb();
+        if (!db) {
+          return res.status(500).json({ error: "Database unavailable" });
+        }
+
+        const { users } = require("../../drizzle/schema");
+        const { eq } = require("drizzle-orm");
+        const userResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+
+        if (!userResult || userResult.length === 0) {
+          return res.status(401).json({ error: "Not authenticated", user: null });
+        }
+
+        const emailUser = userResult[0];
+        res.json({
+          user: {
+            id: emailUser.id,
+            openId: emailUser.openId,
+            name: emailUser.name,
+            email: emailUser.email,
+            loginMethod: emailUser.loginMethod,
+            lastSignedIn: emailUser.lastSignedIn,
+            accountType: emailUser.accountType,
+          },
+        });
+      } catch (emailAuthError) {
+        console.error("[Auth] /api/auth/me failed for both OAuth and Email/Password:", emailAuthError);
+        res.status(401).json({ error: "Not authenticated", user: null });
+      }
     }
   });
 
