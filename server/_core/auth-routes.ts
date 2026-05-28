@@ -143,7 +143,17 @@ router.post("/signup", async (req: Request, res: Response) => {
     }
 
     // Create user
-    const result = await createUserWithPassword(email, password, accountType);
+    let result;
+    try {
+      result = await createUserWithPassword(email, password, accountType);
+    } catch (err) {
+      console.error("[Auth] Signup error details:", err);
+      return res.status(500).json({
+        success: false,
+        error: "فشل إنشاء الحساب",
+        message: err instanceof Error ? err.message : "حدث خطأ أثناء إنشاء الحساب",
+      });
+    }
 
     if (!result) {
       return res.status(500).json({

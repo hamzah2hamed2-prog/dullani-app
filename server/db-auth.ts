@@ -11,6 +11,7 @@ import {
   generateResetToken,
 } from "./_core/auth-service";
 import { drizzle } from "drizzle-orm/mysql2";
+import { createHash } from "crypto";
 
 /**
  * Create a new user with email and password
@@ -27,11 +28,17 @@ export async function createUserWithPassword(
   }
 
   try {
-    // Generate a unique openId for the user
-    const openId = `email-${email.replace(/[^a-z0-9]/gi, "-")}-${Date.now()}`;
+    // Generate a unique openId for the user (max 64 chars)
+    const emailHash = createHash("sha256").update(email).digest("hex").slice(0, 16);
+    const openId = `email-${emailHash}-${Date.now().toString(36)}`;
 
     // Hash the password
     const passwordHash = hashPassword(password);
+    
+    // Verify openId length
+    if (openId.length > 64) {
+      throw new Error(`OpenId too long: ${openId.length} chars`);
+    }
 
     // Create user record
     const userRecord: InsertUser = {
@@ -45,10 +52,14 @@ export async function createUserWithPassword(
 
     // Insert user
     const userResult = await db.insert(users).values(userRecord);
-    const userId = (userResult as any).insertId;
-
+    
+    // Extract userId from Drizzle result
+    // Drizzle returns an object with insertId property for MySQL
+    const userId = (userResult as any)[0]?.insertId || (userResult as any).insertId;
+    
     if (!userId) {
-      throw new Error("Failed to create user");
+      console.error("[Auth] Insert result:", JSON.stringify(userResult, null, 2));
+      throw new Error("Failed to extract userId from insert result");
     }
 
     // Create password record
@@ -78,6 +89,15 @@ export async function createUserWithPassword(
     };
   } catch (error) {
     console.error("[Auth] Failed to create user with password:", error);
+    
+    // Log specific error details
+    if (error instanceof Error) {
+      if (error.message.includes("ER_DUP_ENTRY") || error.message.includes("Duplicate")) {
+        console.error("[Auth] Duplicate email or openId");
+      } else if (error.message.includes("ER_DATA_TOO_LONG")) {
+        console.error("[Auth] Data too long for database field");
+      }
+    }
     throw error;
   }
 }

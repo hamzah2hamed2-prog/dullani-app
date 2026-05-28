@@ -522,3 +522,30 @@
   - [x] أمثلة عملية
   - [x] أفضل الممارسات
   - [x] دليل الاستخدام
+
+
+## Phase 27: إصلاح خطأ Signup (مكتملة ✅)
+- [x] تحديد مشكلة insertId extraction
+  - [x] فحص كيفية إرجاع Drizzle ORM للـ insertId
+  - [x] إضافة معالجة أفضل للأخطاء
+  - [x] إضافة تسجيل تفاصيل النتيجة
+- [x] إصلاح createUserWithPassword function
+  - [x] تحديث استخراج userId من نتيجة الإدراج
+  - [x] إضافة معالجة الأخطاء الشاملة
+  - [x] اختبار الإصلاح
+- [x] اختبار جميع endpoints
+  - [x] POST /api/auth/signup ✅
+  - [x] POST /api/auth/login ✅
+  - [x] GET /api/auth/me ✅
+  - [x] PUT /api/auth/profile ✅
+  - [x] POST /api/auth/password/reset ✅
+  - [x] POST /api/auth/password/reset/confirm ✅
+  - [x] POST /api/auth/password/update ✅
+  - [x] POST /api/auth/logout ✅
+- [x] التحقق من التدفق الكامل
+  - [x] إنشاء حساب جديد
+  - [x] تسجيل الدخول
+  - [x] تحديث البيانات
+  - [x] استرجاع كلمة المرور
+  - [x] تحديث كلمة المرور
+  - [x] تسجيل الخروج
