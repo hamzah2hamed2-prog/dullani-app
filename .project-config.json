@@ -12,10 +12,10 @@
   "experiments": null,
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663202408733/fNrx6CJvXW9f2Kaedm4siB",
-    "access_key_id": "ASIAZV3A2ECZNYF5A2LW",
-    "secret_access_key": "XaOifZBK5XSD8doBfkTEkWz8WzsjpM0C1g4JYfEa",
-    "session_token": "IQoJb3JpZ2luX2VjEOX//////////wEaCXVzLWVhc3QtMSJHMEUCIA27SRVkMSuTYmL07F+xw/nM3zWjyeDwYJNyM8VeyVKIAiEAlLW2GT8sfVnNVr72m0i7b+XT5BDamK6iOI3YWKU3boQq/wMIrf//////////ARAEGgw2NjUzODYwOTg4NjYiDOpijYtSogX8S40EXirTAxnSUo7qr2K3diXYF0EQRcqchJqllll3tXonciNMamX0sIz7sL2MwBJPBZroo9gUiRg9NHmdiMqbHnbDGN5ejC+5rQiKb6a0V0zPb7f1PmQnZodfHT+B3v2F+X2WLCBEq/IKo5tiWX3YH+Y7qc8CgXYF6In23EpCrqzpPBElb+phw+JJGLdymYAvtvAo3Rr8pqNKYlDu5Hof05ThrU06XjUI5SG5E7dROfwueAJlX1pq7a7GFA5KXmGIv44vb1Bx1l2j/PctUcfqm6OFX0YiKyxDBnj85An3Eu0gGBtb0UvOALfGDs4wSkBtGIsqoQJNtxXSueQMqq1ygX0/WeG8f2tk8gctSS8xwqRVp+XvtUpoaIpfO8Q1mJWdKQKomAcXMwHYyfq8k24MU8WZovVBzd1czRwxTxevkWZKj4ezZSuA3sNvH0OJ8vNr1J+XmqaWXQXxDPTseRWy2CEqmtnzQmGK7lWsqUprg6XxTUigtjzK1tWGPR3bUP7wE+HjM16esV7aKLhPgi8WcB+s2qMB0pswTHt08RuiHCUacrWE2iyrrqSVphRwXsdlWqCqNtq2OETQhyOLDO5Il/X9jV1Yiw+Ht7s+a4CReFeC8VwNF7BprHpWMLDCqNAGOp0BHNsRzl+XERbA7NF19mOBu/IFjgU/uh9QD3HMIHnrTRVN/52zBXGeusq6qQKO6uo62dERvxVf6X7E9SbzqRcPnKiMdUB3E+k+NkvIkELuUcNz3SIdVxQnWU9D/WTpXQRw+TPvDdcxYSXsg5mFCCet8OyBaaF2DCfsSY6EbdXCGiaOKAd6d96YZdTxAplpkLTt0e388FJQH9z8tHLhUw==",
-    "expiration": "2026-05-18T08:12:32.000Z"
+    "access_key_id": "ASIAZV3A2ECZLVHXYDYG",
+    "secret_access_key": "+3Dq3os6eR+R/MXL1nmmW8T2+MTn0LFRR7hS93jM",
+    "session_token": "IQoJb3JpZ2luX2VjEO7//////////wEaCXVzLWVhc3QtMSJHMEUCIQD+ZFL6ilSwdSYpzK0bzIfnvu4tJfHqxmzhMv6bw4JfpgIgVmWv+UUvtyJB4427t83LrFP4vflx3pX2k1Y96u8Qs6Iq/wMIt///////////ARAEGgw2NjUzODYwOTg4NjYiDH5/2808YA9oPRjfDirTA1zXahNz2f2nlR/bgz6Ic3R0CpAbsglZqXCg2Bb602ozv0nlio10CLZyixxBCa2EuH+Q6dKErHGuwb/sUj0OE6HKS/F6WFoNnBy+YvIjMhCQ4u05792r/dkU4KEtbO7K5aeUDY6ReKllNqqQNXBNF7icnoumBwHjFYLarcrrhcYqpbGs/lKFBQ+yVGBIZLgN/uVe5Mymh5LfFVFeG0R5BeDA5cZyDBEPU0uWLm96pRaINM0qCE6iRbc7yWVZafj3sQHQLuDYR7rcnzqpau1w6DJTOPoe9HyqbH1eO27byXzlLgsjiYyk2au4eEY3DdLjeDuGpDNiaB7lyGsfCc5mKmYsTqnybsu6Z1gz+a9LKu6RG2ldKeZhit+dvCY3weLCadkRPTJh72grTUuRMWHd8Juzi5CnEpPIl6cZLWaCDzWpD/BKNg4O0sBop8j00QPgZYLC/e6M970Ddj4si32vMHk0onkGjrsXmX08CHVg8w+jy7zeXiqrwWsD0viUnJ7DUJYb8SmWoEduVC+5RemUoA0rGHCyYuB55YX7akZTWHf1Nc2xtp8kHIYeO3ZGO4/hItMie63F968OnmtRdpUS0ijZSuz7RmrXfN2OG1A12UJMzSfeMP3p4tAGOp0Byq21O/IVgjuJaPYNeXyuqcF9kNY9dwBsEk/8L5CwM6jhTTjXYpRfGVXuQJqkqXnBaE6MmxKbX3P80odvILFmXam0kuWKaaKPUzAxN8y3MyTu2d//9QmDuFksDs97zw0oRoaneZV8XYu2FgpjPnIYE4W6ctpzo17J64qeP/80eOrhh19bN4NNEwfbQTfYNPq6J7C8ji/NSh2PKQzKyw==",
+    "expiration": "2026-05-29T09:34:53.000Z"
   },
   "name": "dullani-app",
   "path": "/home/ubuntu/dullani-app",

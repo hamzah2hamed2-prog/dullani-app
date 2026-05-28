@@ -21,6 +21,7 @@ import {
 import { COOKIE_NAME } from "../../shared/const";
 import { getSessionCookieOptions } from "./cookies"; 
 import { getDb } from "../db";
+import { authMiddleware } from "./auth-middleware";
 
 const router = Router();
 
@@ -285,9 +286,9 @@ router.post("/password/reset/confirm", async (req: Request, res: Response) => {
 
 /**
  * POST /api/auth/password/update
- * Update password for authenticated user
+ * Update user password (requires current password)
  */
-router.post("/password/update", async (req: Request, res: Response) => {
+router.post("/password/update", authMiddleware, async (req: Request, res: Response) => {
   try {
     // Get user from session (would be set by middleware in production)
     const userId = (req as any).userId;
@@ -352,7 +353,7 @@ router.post("/password/update", async (req: Request, res: Response) => {
  * POST /api/auth/logout
  * Logout the current user
  */
-router.post("/logout", async (req: Request, res: Response) => {
+router.post("/logout", authMiddleware, async (req: Request, res: Response) => {
   try {
     // Clear session cookie
     res.clearCookie(COOKIE_NAME);
@@ -373,9 +374,9 @@ router.post("/logout", async (req: Request, res: Response) => {
 
 /**
  * GET /api/auth/me
- * Get current user data
+ * Get current user info
  */
-router.get("/me", async (req: Request, res: Response) => {
+router.get("/me", authMiddleware, async (req: Request, res: Response) => {
   try {
     // Get user ID from request (should be set by middleware)
     const userId = (req as any).userId;
@@ -437,7 +438,7 @@ router.get("/me", async (req: Request, res: Response) => {
  * PUT /api/auth/profile
  * Update user profile
  */
-router.put("/profile", async (req: Request, res: Response) => {
+router.put("/profile", authMiddleware, async (req: Request, res: Response) => {
   try {
     // Get user ID from request (should be set by middleware)
     const userId = (req as any).userId;
